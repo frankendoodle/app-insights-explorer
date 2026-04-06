@@ -1,0 +1,14 @@
+node_modules/
+.next/
+dist/
+.env
+.env.local
+
+# Feature requirements — archived to Jira after completion
+requirements/
+
+# Terraform
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.backup
+**/*.tfvars

@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(curl -s -o /tmp/teams_test_response.txt -w \"%{http_code}\" -X POST \"https://default4af2e9e0a2d7475c9f4db3a8a8ad4f.5a.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/49de8e460ce747ae8ed184ae7533a63a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=zkhoV2nIgaS9dcHAnamqJQOFVJZDBhuSkE47A2EiZgI\" -H \"Content-Type: application/json\" -d \"{\"\"@type\"\":\"\"MessageCard\"\",\"\"@context\"\":\"\"http://schema.org/extensions\"\",\"\"themeColor\"\":\"\"0078D7\"\",\"\"title\"\":\"\"Test from App Insights Explorer\"\",\"\"text\"\":\"\"If you see this, the webhook is working.\"\"}\")",
+      "Read(//tmp/**)",
+      "mcp__claude_ai_Atlassian__getJiraIssue",
+      "mcp__claude_ai_Atlassian__createJiraIssue",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "mcp__claude_ai_Atlassian__searchConfluenceUsingCql",
+      "mcp__claude_ai_Atlassian__getConfluencePage",
+      "Bash(xargs grep:*)",
+      "Bash(grep -r \"NextAuthMiddleware\\\\|middleware\" /c/src/commissions/src --include=*.ts --include=*.tsx)",
+      "Bash(grep -r \"isExpired\\\\|convertToArray\" /c/src/commissions/src --include=*.ts --include=*.tsx -l)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)",
+      "Bash(gh auth:*)",
+      "Bash(git push:*)",
+      "Bash(mkdir -p \"C:\\\\src\\\\PersonalGit\")",
+      "Bash(cp -r \"C:\\\\src\\\\app-insights-explorer\" \"C:\\\\src\\\\PersonalGit\\\\app-insights-explorer\")",
+      "Bash(rm -rf \"C:/src/PersonalGit/app-insights-explorer\")",
+      "Bash(cp -r \"C:/src/app-insights-explorer/.\" \"C:/src/PersonalGit/app-insights-explorer/\")"
+    ]
+  }
+}

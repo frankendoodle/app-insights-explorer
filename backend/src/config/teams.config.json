@@ -1,0 +1,10 @@
+[
+  {
+    "team": "Example Team",
+    "webhook": "REPLACE_WITH_TEAMS_WEBHOOK_URL",
+    "digest": { "time": "08:00" },
+    "environments": [
+      "Example Environment"
+    ]
+  }
+]

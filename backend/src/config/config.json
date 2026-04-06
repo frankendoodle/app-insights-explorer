@@ -1,0 +1,10 @@
+{
+  "AppInsightsEnvironments": [
+    {
+      "Name": "Example Environment",
+      "WorkspaceId": "YOUR_WORKSPACE_ID",
+      "ResourceId": "/subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/YOUR_RESOURCE_GROUP/providers/microsoft.insights/components/YOUR_APP_INSIGHTS_NAME"
+    }
+  ],
+  "CannedQueries": []
+}
