@@ -23,7 +23,16 @@
       "Bash(mkdir -p \"C:\\\\src\\\\PersonalGit\")",
       "Bash(cp -r \"C:\\\\src\\\\app-insights-explorer\" \"C:\\\\src\\\\PersonalGit\\\\app-insights-explorer\")",
       "Bash(rm -rf \"C:/src/PersonalGit/app-insights-explorer\")",
-      "Bash(cp -r \"C:/src/app-insights-explorer/.\" \"C:/src/PersonalGit/app-insights-explorer/\")"
+      "Bash(cp -r \"C:/src/app-insights-explorer/.\" \"C:/src/PersonalGit/app-insights-explorer/\")",
+      "Bash(npm run:*)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(taskkill /PID 4544 /F)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":3001\")",
+      "Bash(taskkill //PID 4544 //F)",
+      "Bash(taskkill //PID 6168 //F)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\('packages',{}\\).keys\\(\\)\\)[:10]\\)\")",
+      "Bash(node:*)"
     ]
   }
 }

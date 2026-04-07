@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
+    "app-insights-explorer": "file:..",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.7.0",

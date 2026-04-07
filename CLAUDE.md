@@ -58,3 +58,42 @@ Config will live in `teams.config.json` at the project root, owned by tech leads
 ## Proof of Concept Uses
 
 This app is intentionally kept as a focused, self-contained tool to serve as a foundation for other POCs, including GitHub Actions integration and other AI-driven developer workflow experiments.
+
+## CI/CD POC — Personal Account Setup (PLATFORM-44)
+
+**Goal:** Demonstrate end-to-end GitHub Actions + Terraform + Azure CI/CD using personal accounts.
+
+**This repo** (`C:\src\PersonalGit\app-insights-explorer`) is the working copy that gets pushed to personal GitHub. The original M&M version lives at `C:\src\app-insights-explorer`.
+
+### What's been stripped / simplified vs. M&M version
+- M&M App Insights resource IDs removed from `backend/src/config/config.json` (replaced with placeholders)
+- Single environment (`test`) only — no staging, no production
+- No approval gates — push to `development` → build → deploy
+- No required PR reviewers (solo personal repo)
+- No release pipeline
+
+### Pipeline
+| Workflow | Trigger | What it does |
+|---|---|
+| `pr.yml` | PR → `development` | Lint, test, Docker build (no push), `terraform plan` posted as comment |
+| `ci.yml` | Push to `development` | Build + push to ACR, `terraform apply`, deploy to App Service, smoke test |
+
+### IaC Structure
+```
+infra/
+├── shared/          # ACR, OIDC federated credentials, SSO App Reg, GitHub Variables, branch protection
+└── envs/
+    └── test/        # App Service plan + web + api apps + Key Vault
+```
+
+### Bootstrap Sequence (one-time)
+1. `az login` with personal Microsoft account
+2. `./build-release/scripts/bootstrap.sh` — creates TF state storage + CI/CD Service Principal
+3. Set 5 GitHub Actions Variables shown at end of bootstrap output
+4. `terraform apply infra/shared/` — provisions ACR, OIDC, SSO App Reg, branch protection, GitHub env
+5. Bootstrap Key Vault secrets manually (SSO client ID/secret, Anthropic key, etc.)
+6. `terraform apply infra/envs/test/` — provisions App Service plan + web/api apps
+7. Push to `development` → watch CI run end to end
+
+### Known Gap
+`backend/src/` only has config files — NestJS source files (app.controller.ts, app.service.ts, etc.) need to be added for the Docker build to succeed.
