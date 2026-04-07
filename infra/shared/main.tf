@@ -54,6 +54,10 @@ data "azuread_application" "cicd_sp" {
   object_id = var.cicd_sp_object_id
 }
 
+data "azuread_service_principal" "cicd_sp" {
+  client_id = var.cicd_sp_app_id
+}
+
 resource "azuread_application_federated_identity_credential" "pr" {
   application_id = data.azuread_application.cicd_sp.id
   display_name   = "github-pr"
@@ -74,7 +78,7 @@ resource "azuread_application_federated_identity_credential" "ci" {
 resource "azurerm_role_assignment" "cicd_acr_push" {
   scope                = azurerm_container_registry.acr.id
   role_definition_name = "AcrPush"
-  principal_id         = var.cicd_sp_object_id
+  principal_id         = data.azuread_service_principal.cicd_sp.object_id
 }
 
 # ── SSO App Registration ──────────────────────────────────────────────────────

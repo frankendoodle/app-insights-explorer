@@ -26,7 +26,7 @@ module "app_service" {
   source = "../../modules/app-service"
 
   environment          = "test"
-  location             = "eastus"
+  location             = "westus2"
   resource_group_name  = "rg-app-insights-explorer-test"
   app_service_plan_sku = "B1"
   web_app_name         = "aie-web-test"
