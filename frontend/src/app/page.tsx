@@ -64,8 +64,8 @@ export default function DashboardPage() {
         const [envs, queries] = await Promise.all([api.getEnvironments(), api.getQueries()]);
         setEnvironments(envs);
         setCannedQueries(queries);
-      } catch (err: any) {
-        setErrorMessage(`Failed to load configuration: ${err.message}`);
+      } catch (err: unknown) {
+        setErrorMessage(`Failed to load configuration: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
     init();
@@ -113,8 +113,8 @@ export default function DashboardPage() {
         kql: substituted(),
       });
       setQueryResult(result);
-    } catch (err: any) {
-      setErrorMessage(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      setErrorMessage(`Error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsLoading(false);
     }
@@ -128,8 +128,8 @@ export default function DashboardPage() {
       const result = await api.runQuery({ environmentName: selectedEnvironment, kql });
       setQueryResult(result);
       setDrillDownType(label);
-    } catch (err: any) {
-      setErrorMessage(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      setErrorMessage(`Error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsLoading(false);
     }
@@ -244,8 +244,8 @@ export default function DashboardPage() {
     try {
       const result = await api.analyze({ prompt });
       setAnalysisText(result.analysis);
-    } catch (err: any) {
-      setAnalysisError(`Analysis failed: ${err.message}`);
+    } catch (err: unknown) {
+      setAnalysisError(`Analysis failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsAnalyzing(false);
     }

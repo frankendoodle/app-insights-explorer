@@ -36,10 +36,10 @@ export function parseDetails(raw: string): ExceptionEntry[] | null {
   try {
     const parsed = JSON.parse(json);
     const arr = Array.isArray(parsed) ? parsed : [parsed];
-    const entries: ExceptionEntry[] = arr.map((entry: any) => ({
+    const entries: ExceptionEntry[] = arr.map((entry: Record<string, unknown>) => ({
       type: entry.typeName ?? entry.type ?? '',
       message: entry.message ?? entry.outerMessage ?? '',
-      frames: (entry.parsedStack ?? entry.frames ?? []).map((f: any) => ({
+      frames: (entry.parsedStack ?? entry.frames ?? []).map((f: Record<string, unknown>) => ({
         method: f.method ?? f.Method ?? '',
         assembly: f.assembly ?? f.Assembly ?? '',
         fileName: f.fileName ?? f.FileName ?? '',

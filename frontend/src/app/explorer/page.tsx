@@ -208,8 +208,8 @@ export default function ExplorerPage() {
       const result = await api.runQuery({ environmentName: selectedEnvironment, kql });
       setRawRows(parseRows(result));
       setExecutedAt(result.executedAt);
-    } catch (err: any) {
-      setErrorMessage(`Error: ${err.message}`);
+    } catch (err: unknown) {
+      setErrorMessage(`Error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsLoading(false);
     }
@@ -240,8 +240,8 @@ export default function ExplorerPage() {
     try {
       const result = await api.analyze({ prompt });
       setAnalysisText(result.analysis);
-    } catch (err: any) {
-      setAnalysisError(`Analysis failed: ${err.message}`);
+    } catch (err: unknown) {
+      setAnalysisError(`Analysis failed: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsAnalyzing(false);
     }
@@ -652,7 +652,7 @@ export default function ExplorerPage() {
 
                   const rowBadgeStyle = (itemType: string): React.CSSProperties => {
                     const it = itemType.toLowerCase();
-                    let s: React.CSSProperties = { padding: '0.15rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, border: '1px solid', borderRadius: 0, whiteSpace: 'nowrap' };
+                    const s: React.CSSProperties = { padding: '0.15rem 0.5rem', fontSize: '0.75rem', fontWeight: 600, border: '1px solid', borderRadius: 0, whiteSpace: 'nowrap' };
                     if (it === 'exception') return { ...s, backgroundColor: 'rgba(208,2,27,0.1)', color: '#D0021B', borderColor: 'rgba(208,2,27,0.2)' };
                     if (it === 'request') return { ...s, backgroundColor: '#eff6ff', color: '#002f6c', borderColor: '#bfdbfe' };
                     if (it === 'dependency') return { ...s, backgroundColor: '#fff7ed', color: '#FF7F32', borderColor: '#fed7aa' };
