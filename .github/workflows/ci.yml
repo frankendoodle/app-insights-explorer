@@ -157,19 +157,12 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Update container image
-        run: |
-          az webapp config container set \
-            --name ${{ needs.terraform-apply-test.outputs.api_app_name }} \
-            --resource-group ${{ needs.terraform-apply-test.outputs.resource_group_name }} \
-            --docker-custom-image-name ${{ vars.ACR_NAME }}.azurecr.io/app-insights-api:${{ github.sha }}
-
       - name: Restart and wait for healthy
         run: |
           az webapp restart \
             --name ${{ needs.terraform-apply-test.outputs.api_app_name }} \
             --resource-group ${{ needs.terraform-apply-test.outputs.resource_group_name }}
-          sleep 60
+          sleep 90
 
   deploy-web:
     name: Deploy Web (test)
@@ -184,19 +177,12 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Update container image
-        run: |
-          az webapp config container set \
-            --name ${{ needs.terraform-apply-test.outputs.web_app_name }} \
-            --resource-group ${{ needs.terraform-apply-test.outputs.resource_group_name }} \
-            --docker-custom-image-name ${{ vars.ACR_NAME }}.azurecr.io/app-insights-web:${{ github.sha }}
-
       - name: Restart and wait for healthy
         run: |
           az webapp restart \
             --name ${{ needs.terraform-apply-test.outputs.web_app_name }} \
             --resource-group ${{ needs.terraform-apply-test.outputs.resource_group_name }}
-          sleep 60
+          sleep 90
 
   smoke-test:
     name: Smoke Test (test)
