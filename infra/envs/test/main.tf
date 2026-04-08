@@ -22,12 +22,6 @@ variable "acr_name" {
   description = "Name of the shared Azure Container Registry — passed in by the pipeline via TF_VAR_acr_name"
 }
 
-variable "acr_password" {
-  type        = string
-  sensitive   = true
-  description = "ACR admin password — passed in by the pipeline via TF_VAR_acr_password"
-}
-
 module "app_service" {
   source = "../../modules/app-service"
 
@@ -39,7 +33,6 @@ module "app_service" {
   api_app_name         = "aie-api-test"
   acr_name             = var.acr_name
   image_tag            = var.image_tag
-  acr_password         = var.acr_password
   key_vault_name       = "kv-aie-test"
   always_on            = false
 }

@@ -43,12 +43,6 @@ variable "key_vault_name" {
   description = "Globally unique name for the Key Vault for this environment (e.g. kv-aie-test)"
 }
 
-variable "acr_password" {
-  type        = string
-  sensitive   = true
-  description = "ACR admin password — passed in by the pipeline via TF_VAR_acr_password"
-}
-
 variable "always_on" {
   type        = bool
   default     = false
