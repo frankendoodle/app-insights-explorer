@@ -74,6 +74,14 @@ resource "azuread_application_federated_identity_credential" "ci" {
   subject        = "repo:${var.github_owner}/${var.github_repo}:ref:refs/heads/development"
 }
 
+resource "azuread_application_federated_identity_credential" "ci_env_test" {
+  application_id = data.azuread_application.cicd_sp.id
+  display_name   = "github-ci-env-test"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:${var.github_owner}/${var.github_repo}:environment:test"
+}
+
 # AcrPush — allows the pipeline to push built images to the registry
 resource "azurerm_role_assignment" "cicd_acr_push" {
   scope                = azurerm_container_registry.acr.id
