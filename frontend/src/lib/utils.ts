@@ -36,10 +36,12 @@ export function parseDetails(raw: string): ExceptionEntry[] | null {
   try {
     const parsed = JSON.parse(json);
     const arr = Array.isArray(parsed) ? parsed : [parsed];
-    const entries: ExceptionEntry[] = arr.map((entry: Record<string, unknown>) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const entries: ExceptionEntry[] = arr.map((entry: any) => ({
       type: entry.typeName ?? entry.type ?? '',
       message: entry.message ?? entry.outerMessage ?? '',
-      frames: (entry.parsedStack ?? entry.frames ?? []).map((f: Record<string, unknown>) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      frames: (entry.parsedStack ?? entry.frames ?? []).map((f: any) => ({
         method: f.method ?? f.Method ?? '',
         assembly: f.assembly ?? f.Assembly ?? '',
         fileName: f.fileName ?? f.FileName ?? '',
