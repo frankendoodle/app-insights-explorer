@@ -106,6 +106,11 @@ jobs:
 
       - name: Terraform init
         working-directory: infra/envs/test
+        env:
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC: "true"
         run: |
           terraform init \
             -backend-config="resource_group_name=${{ vars.TF_BACKEND_RESOURCE_GROUP }}" \
@@ -115,6 +120,11 @@ jobs:
 
       - name: Terraform apply
         working-directory: infra/envs/test
+        env:
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC: "true"
         run: terraform apply -auto-approve -var="image_tag=${{ github.sha }}" -var="acr_name=${{ vars.ACR_NAME }}"
 
       - name: Capture Terraform outputs
