@@ -48,11 +48,12 @@ resource "azurerm_linux_web_app" "web" {
   }
 
   app_settings = {
-    WEBSITES_PORT                    = "3000"
-    DOCKER_REGISTRY_SERVER_URL       = "https://${data.azurerm_container_registry.acr.login_server}"
-    DOCKER_CUSTOM_IMAGE_NAME         = "${data.azurerm_container_registry.acr.login_server}/app-insights-web:${var.image_tag}"
-    acrUseManagedIdentityCreds       = "true"
-    AppRegistrationClientId          = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationClientId)"
+    WEBSITES_PORT                      = "3000"
+    DOCKER_REGISTRY_SERVER_URL         = "https://${data.azurerm_container_registry.acr.login_server}"
+    DOCKER_CUSTOM_IMAGE_NAME           = "${data.azurerm_container_registry.acr.login_server}/app-insights-web:${var.image_tag}"
+    DOCKER_REGISTRY_SERVER_USERNAME    = var.acr_name
+    DOCKER_REGISTRY_SERVER_PASSWORD    = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AcrAdminPassword)"
+    AppRegistrationClientId            = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationClientId)"
     AppRegistrationTenantId        = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationTenantId)"
     AppRegistrationClientSecret    = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationClientSecret)"
     NextAuthSecret                 = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=NextAuthSecret)"
@@ -78,11 +79,12 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   app_settings = {
-    WEBSITES_PORT                  = "3001"
-    DOCKER_REGISTRY_SERVER_URL     = "https://${data.azurerm_container_registry.acr.login_server}"
-    DOCKER_CUSTOM_IMAGE_NAME       = "${data.azurerm_container_registry.acr.login_server}/app-insights-api:${var.image_tag}"
-    acrUseManagedIdentityCreds     = "true"
-    ANTHROPIC_API_KEY              = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AnthropicApiKey)"
+    WEBSITES_PORT                      = "3001"
+    DOCKER_REGISTRY_SERVER_URL         = "https://${data.azurerm_container_registry.acr.login_server}"
+    DOCKER_CUSTOM_IMAGE_NAME           = "${data.azurerm_container_registry.acr.login_server}/app-insights-api:${var.image_tag}"
+    DOCKER_REGISTRY_SERVER_USERNAME    = var.acr_name
+    DOCKER_REGISTRY_SERVER_PASSWORD    = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AcrAdminPassword)"
+    ANTHROPIC_API_KEY                  = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AnthropicApiKey)"
     BACKEND_API_SECRET = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=BackendApiSecret)"
     FRONTEND_ORIGIN    = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=FrontendOrigin)"
   }
