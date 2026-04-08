@@ -53,8 +53,9 @@ resource "azurerm_linux_web_app" "web" {
   }
 
   app_settings = {
-    WEBSITES_PORT                  = "3000"
-    AppRegistrationClientId        = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationClientId)"
+    WEBSITES_PORT                    = "3000"
+    acrUseManagedIdentityCreds       = "true"
+    AppRegistrationClientId          = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationClientId)"
     AppRegistrationTenantId        = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationTenantId)"
     AppRegistrationClientSecret    = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationClientSecret)"
     NextAuthSecret                 = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=NextAuthSecret)"
@@ -85,8 +86,9 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   app_settings = {
-    WEBSITES_PORT      = "3001"
-    ANTHROPIC_API_KEY  = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AnthropicApiKey)"
+    WEBSITES_PORT                  = "3001"
+    acrUseManagedIdentityCreds     = "true"
+    ANTHROPIC_API_KEY              = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AnthropicApiKey)"
     BACKEND_API_SECRET = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=BackendApiSecret)"
     FRONTEND_ORIGIN    = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=FrontendOrigin)"
   }
