@@ -168,10 +168,7 @@ jobs:
           az webapp restart \
             --name ${{ needs.terraform-apply-test.outputs.api_app_name }} \
             --resource-group ${{ needs.terraform-apply-test.outputs.resource_group_name }}
-          az webapp wait \
-            --name ${{ needs.terraform-apply-test.outputs.api_app_name }} \
-            --resource-group ${{ needs.terraform-apply-test.outputs.resource_group_name }} \
-            --updated --timeout 120
+          sleep 60
 
   deploy-web:
     name: Deploy Web (test)
@@ -198,10 +195,7 @@ jobs:
           az webapp restart \
             --name ${{ needs.terraform-apply-test.outputs.web_app_name }} \
             --resource-group ${{ needs.terraform-apply-test.outputs.resource_group_name }}
-          az webapp wait \
-            --name ${{ needs.terraform-apply-test.outputs.web_app_name }} \
-            --resource-group ${{ needs.terraform-apply-test.outputs.resource_group_name }} \
-            --updated --timeout 120
+          sleep 60
 
   smoke-test:
     name: Smoke Test (test)
