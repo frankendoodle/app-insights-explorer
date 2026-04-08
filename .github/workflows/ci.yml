@@ -131,6 +131,11 @@ jobs:
       - name: Capture Terraform outputs
         id: tf-output
         working-directory: infra/envs/test
+        env:
+          ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC: "true"
         run: |
           echo "web_app_name=$(terraform output -raw web_app_name)" >> $GITHUB_OUTPUT
           echo "api_app_name=$(terraform output -raw api_app_name)" >> $GITHUB_OUTPUT
