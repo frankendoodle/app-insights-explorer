@@ -37,7 +37,10 @@ jobs:
       - name: Build & push Docker image
         run: |
           IMAGE=${{ vars.ACR_NAME }}.azurecr.io/app-insights-web
-          docker build frontend/ --tag $IMAGE:${{ github.sha }}
+          docker build frontend/ \
+            --build-arg NEXT_PUBLIC_API_URL=https://aie-api-test.azurewebsites.net \
+            --build-arg NEXT_PUBLIC_BACKEND_API_SECRET=${{ secrets.BACKEND_API_SECRET }} \
+            --tag $IMAGE:${{ github.sha }}
           docker push $IMAGE:${{ github.sha }}
           docker tag $IMAGE:${{ github.sha }} $IMAGE:latest
           docker push $IMAGE:latest
