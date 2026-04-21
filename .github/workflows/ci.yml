@@ -94,6 +94,18 @@ jobs:
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Verify infrastructure exists
+        run: |
+          STATE=$(az webapp show \
+            --name aie-api-test \
+            --resource-group rg-app-insights-explorer-test \
+            --query state -o tsv 2>/dev/null || echo "NotFound")
+          if [ "$STATE" = "NotFound" ]; then
+            echo "::error::Infrastructure not ready. Run the 'Infrastructure — Terraform Apply' workflow first."
+            exit 1
+          fi
+          echo "Infrastructure verified (App Service state: $STATE)"
+
       - name: Update API container image
         run: |
           az webapp config container set \

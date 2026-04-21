@@ -12,11 +12,6 @@ provider "azurerm" {
   features {}
 }
 
-variable "image_tag" {
-  type        = string
-  description = "Docker image tag (git SHA) to deploy — passed in by the pipeline"
-}
-
 variable "acr_name" {
   type        = string
   description = "Name of the shared Azure Container Registry — passed in by the pipeline via TF_VAR_acr_name"
@@ -32,7 +27,6 @@ module "app_service" {
   web_app_name         = "aie-web-test"
   api_app_name         = "aie-api-test"
   acr_name             = var.acr_name
-  image_tag            = var.image_tag
   key_vault_name       = "kv-aie-test"
   always_on            = false
 }
