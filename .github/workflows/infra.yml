@@ -42,6 +42,7 @@ jobs:
         run: terraform apply -auto-approve
         env:
           TF_VAR_acr_name: ${{ vars.ACR_NAME }}
+          TF_VAR_admin_object_id: ${{ vars.ADMIN_OBJECT_ID }}
 
       - name: Notify Teams — success
         if: success()
