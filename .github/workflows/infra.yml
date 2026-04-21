@@ -44,6 +44,24 @@ jobs:
           TF_VAR_acr_name: ${{ vars.ACR_NAME }}
           TF_VAR_admin_object_id: ${{ vars.ADMIN_OBJECT_ID }}
 
+      - name: Populate Key Vault secrets
+        env:
+          KV_ANTHROPIC_API_KEY: ${{ secrets.KV_ANTHROPIC_API_KEY }}
+          KV_APP_REG_CLIENT_ID: ${{ secrets.KV_APP_REG_CLIENT_ID }}
+          KV_APP_REG_CLIENT_SECRET: ${{ secrets.KV_APP_REG_CLIENT_SECRET }}
+          KV_NEXTAUTH_SECRET: ${{ secrets.KV_NEXTAUTH_SECRET }}
+          KV_BACKEND_API_SECRET: ${{ secrets.KV_BACKEND_API_SECRET }}
+        run: |
+          az keyvault secret set --vault-name kv-aie-test --name AnthropicApiKey             --value "$KV_ANTHROPIC_API_KEY"
+          az keyvault secret set --vault-name kv-aie-test --name AppRegistrationClientId     --value "$KV_APP_REG_CLIENT_ID"
+          az keyvault secret set --vault-name kv-aie-test --name AppRegistrationClientSecret --value "$KV_APP_REG_CLIENT_SECRET"
+          az keyvault secret set --vault-name kv-aie-test --name AppRegistrationTenantId     --value "${{ vars.AZURE_TENANT_ID }}"
+          az keyvault secret set --vault-name kv-aie-test --name NextAuthSecret              --value "$KV_NEXTAUTH_SECRET"
+          az keyvault secret set --vault-name kv-aie-test --name NextAuthUrl                 --value "https://aie-web-test.azurewebsites.net"
+          az keyvault secret set --vault-name kv-aie-test --name NextPublicApiUrl            --value "https://aie-api-test.azurewebsites.net"
+          az keyvault secret set --vault-name kv-aie-test --name FrontendOrigin              --value "https://aie-web-test.azurewebsites.net"
+          az keyvault secret set --vault-name kv-aie-test --name BackendApiSecret            --value "$KV_BACKEND_API_SECRET"
+
       - name: Notify Teams — success
         if: success()
         env:
