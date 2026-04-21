@@ -33,11 +33,6 @@ variable "acr_name" {
   description = "Name of the shared Azure Container Registry (without .azurecr.io)"
 }
 
-variable "image_tag" {
-  type        = string
-  description = "Docker image tag (git SHA) to deploy — passed in by the pipeline"
-}
-
 variable "key_vault_name" {
   type        = string
   description = "Globally unique name for the Key Vault for this environment (e.g. kv-aie-test)"
