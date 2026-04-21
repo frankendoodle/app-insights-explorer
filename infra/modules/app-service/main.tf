@@ -124,9 +124,17 @@ resource "azurerm_role_assignment" "api_kv_secrets_user" {
   principal_id         = azurerm_linux_web_app.api.identity[0].principal_id
 }
 
-# Deployment Service Principal — write secrets to Key Vault during bootstrap (Step 9a)
+# Deployment Service Principal — write secrets to Key Vault during bootstrap
 resource "azurerm_role_assignment" "cicd_kv_secrets_officer" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = data.azurerm_client_config.current.object_id
+}
+
+# Admin user — full access to manage secrets manually (e.g. initial population)
+resource "azurerm_role_assignment" "admin_kv_secrets_officer" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = var.admin_object_id
+  principal_type       = "User"
 }

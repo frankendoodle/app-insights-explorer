@@ -17,6 +17,11 @@ variable "acr_name" {
   description = "Name of the shared Azure Container Registry — passed in by the pipeline via TF_VAR_acr_name"
 }
 
+variable "admin_object_id" {
+  type        = string
+  description = "Object ID of the admin user — passed in via TF_VAR_admin_object_id"
+}
+
 module "app_service" {
   source = "../../modules/app-service"
 
@@ -27,6 +32,7 @@ module "app_service" {
   web_app_name         = "aie-web-test"
   api_app_name         = "aie-api-test"
   acr_name             = var.acr_name
+  admin_object_id      = var.admin_object_id
   key_vault_name       = "kv-aie-test"
   always_on            = false
 }

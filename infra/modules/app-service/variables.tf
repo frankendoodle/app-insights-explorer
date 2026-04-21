@@ -43,3 +43,8 @@ variable "always_on" {
   default     = false
   description = "Whether to keep the App Service always warm — false for test (B1 SKU), true for staging/prod"
 }
+
+variable "admin_object_id" {
+  type        = string
+  description = "Object ID of the admin user to grant Key Vault Secrets Officer — allows populating secrets after terraform apply"
+}
