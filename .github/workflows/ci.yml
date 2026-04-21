@@ -121,8 +121,21 @@ jobs:
             --resource-group rg-app-insights-explorer-test \
             --docker-custom-image-name ${{ vars.ACR_NAME }}.azurecr.io/app-insights-web:${{ github.sha }}
 
-      - name: Wait for apps to restart
-        run: sleep 90
+      - name: Wait for apps to become healthy
+        run: |
+          echo "Polling until both App Services respond..."
+          for i in $(seq 1 24); do
+            API=$(curl -s -o /dev/null -w "%{http_code}" https://aie-api-test.azurewebsites.net/api/environments)
+            WEB=$(curl -s -o /dev/null -w "%{http_code}" https://aie-web-test.azurewebsites.net)
+            echo "Attempt $i/24 — API: $API  Web: $WEB"
+            if [ "$API" != "503" ] && [ "$API" != "000" ] && [ "$WEB" != "503" ] && [ "$WEB" != "000" ]; then
+              echo "Both apps are responding."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Apps did not become healthy within 6 minutes."
+          exit 1
 
   smoke-test:
     name: Smoke Test (test)
