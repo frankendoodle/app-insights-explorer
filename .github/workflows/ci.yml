@@ -109,17 +109,17 @@ jobs:
 
       - name: Update API container image
         run: |
-          az webapp config container set \
+          az webapp config appsettings set \
             --name aie-api-test \
             --resource-group rg-app-insights-explorer-test \
-            --docker-custom-image-name ${{ vars.ACR_NAME }}.azurecr.io/app-insights-api:${{ github.sha }}
+            --settings DOCKER_CUSTOM_IMAGE_NAME=${{ vars.ACR_NAME }}.azurecr.io/app-insights-api:${{ github.sha }}
 
       - name: Update Web container image
         run: |
-          az webapp config container set \
+          az webapp config appsettings set \
             --name aie-web-test \
             --resource-group rg-app-insights-explorer-test \
-            --docker-custom-image-name ${{ vars.ACR_NAME }}.azurecr.io/app-insights-web:${{ github.sha }}
+            --settings DOCKER_CUSTOM_IMAGE_NAME=${{ vars.ACR_NAME }}.azurecr.io/app-insights-web:${{ github.sha }}
 
       - name: Wait for apps to become healthy
         run: |
