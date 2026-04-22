@@ -44,14 +44,13 @@ resource "azurerm_linux_web_app" "web" {
   }
 
   site_config {
-    always_on = var.always_on
+    always_on                            = var.always_on
+    container_registry_use_managed_identity = true
   }
 
   app_settings = {
-    WEBSITES_PORT                      = "3000"
-    DOCKER_REGISTRY_SERVER_URL          = data.azurerm_container_registry.acr.login_server
+    WEBSITES_PORT                       = "3000"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = "false"
-    acrUseManagedIdentityCreds          = "1"
     AppRegistrationClientId            = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationClientId)"
     AppRegistrationTenantId        = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationTenantId)"
     AppRegistrationClientSecret    = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AppRegistrationClientSecret)"
@@ -78,14 +77,13 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   site_config {
-    always_on = var.always_on
+    always_on                               = var.always_on
+    container_registry_use_managed_identity = true
   }
 
   app_settings = {
-    WEBSITES_PORT                      = "3001"
-    DOCKER_REGISTRY_SERVER_URL          = data.azurerm_container_registry.acr.login_server
+    WEBSITES_PORT                       = "3001"
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = "false"
-    acrUseManagedIdentityCreds          = "1"
     ANTHROPIC_API_KEY                  = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=AnthropicApiKey)"
     BACKEND_API_SECRET = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=BackendApiSecret)"
     FRONTEND_ORIGIN    = "@Microsoft.KeyVault(VaultName=${var.key_vault_name};SecretName=FrontendOrigin)"
