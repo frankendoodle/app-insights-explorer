@@ -1,0 +1,117 @@
+name: Infrastructure — Terraform Apply (STAGING)
+
+on:
+  push:
+    branches:
+      - 'release-*'
+    paths:
+      - 'infra/**'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform-apply:
+    name: Terraform Apply (staging)
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: infra/envs/staging
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{ vars.TF_BACKEND_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TF_BACKEND_STORAGE_ACCOUNT }}"
+
+      - name: Terraform Apply
+        working-directory: infra/envs/staging
+        run: terraform apply -auto-approve
+        env:
+          TF_VAR_acr_name: ${{ vars.ACR_NAME }}
+          TF_VAR_admin_object_id: ${{ vars.ADMIN_OBJECT_ID }}
+
+      - name: Populate Key Vault secrets
+        env:
+          KV_ANTHROPIC_API_KEY: ${{ secrets.KV_ANTHROPIC_API_KEY }}
+          KV_APP_REG_CLIENT_ID: ${{ secrets.KV_APP_REG_CLIENT_ID }}
+          KV_APP_REG_CLIENT_SECRET: ${{ secrets.KV_APP_REG_CLIENT_SECRET }}
+          KV_NEXTAUTH_SECRET: ${{ secrets.KV_NEXTAUTH_SECRET }}
+          KV_BACKEND_API_SECRET: ${{ secrets.KV_BACKEND_API_SECRET }}
+        run: |
+          az keyvault secret set --vault-name kv-aie-staging --name AnthropicApiKey             --value "$KV_ANTHROPIC_API_KEY"
+          az keyvault secret set --vault-name kv-aie-staging --name AppRegistrationClientId     --value "$KV_APP_REG_CLIENT_ID"
+          az keyvault secret set --vault-name kv-aie-staging --name AppRegistrationClientSecret --value "$KV_APP_REG_CLIENT_SECRET"
+          az keyvault secret set --vault-name kv-aie-staging --name AppRegistrationTenantId     --value "${{ vars.AZURE_TENANT_ID }}"
+          az keyvault secret set --vault-name kv-aie-staging --name NextAuthSecret              --value "$KV_NEXTAUTH_SECRET"
+          az keyvault secret set --vault-name kv-aie-staging --name NextAuthUrl                 --value "https://aie-web-staging.azurewebsites.net"
+          az keyvault secret set --vault-name kv-aie-staging --name NextPublicApiUrl            --value "https://aie-api-staging.azurewebsites.net"
+          az keyvault secret set --vault-name kv-aie-staging --name FrontendOrigin              --value "https://aie-web-staging.azurewebsites.net"
+          az keyvault secret set --vault-name kv-aie-staging --name BackendApiSecret            --value "$KV_BACKEND_API_SECRET"
+
+      - name: Notify Teams — success
+        if: success()
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: |
+          if [ -z "$TEAMS_WEBHOOK_URL" ]; then exit 0; fi
+          curl -s -X POST "$TEAMS_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"@type\": \"MessageCard\",
+              \"@context\": \"http://schema.org/extensions\",
+              \"themeColor\": \"0076D7\",
+              \"summary\": \"Infrastructure deployed\",
+              \"sections\": [{
+                \"activityTitle\": \"Infrastructure Ready — staging\",
+                \"facts\": [
+                  { \"name\": \"Triggered by\", \"value\": \"${{ github.actor }}\" },
+                  { \"name\": \"Commit\", \"value\": \"${{ github.sha }}\" }
+                ]
+              }],
+              \"potentialAction\": [{
+                \"@type\": \"OpenUri\",
+                \"name\": \"View Run\",
+                \"targets\": [{ \"os\": \"default\", \"uri\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\" }]
+              }]
+            }"
+
+      - name: Notify Teams — failure
+        if: failure()
+        env:
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: |
+          if [ -z "$TEAMS_WEBHOOK_URL" ]; then exit 0; fi
+          curl -s -X POST "$TEAMS_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"@type\": \"MessageCard\",
+              \"@context\": \"http://schema.org/extensions\",
+              \"themeColor\": \"FF0000\",
+              \"summary\": \"Infrastructure deployment failed\",
+              \"sections\": [{
+                \"activityTitle\": \"Infrastructure Failed — staging\",
+                \"facts\": [
+                  { \"name\": \"Triggered by\", \"value\": \"${{ github.actor }}\" },
+                  { \"name\": \"Commit\", \"value\": \"${{ github.sha }}\" }
+                ]
+              }],
+              \"potentialAction\": [{
+                \"@type\": \"OpenUri\",
+                \"name\": \"View Run\",
+                \"targets\": [{ \"os\": \"default\", \"uri\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\" }]
+              }]
+            }"

@@ -51,3 +51,8 @@ variable "sso_test_hostname" {
   type        = string
   description = "Hostname of the frontend App Service in test (e.g. aie-web-test.azurewebsites.net)"
 }
+
+variable "sso_staging_hostname" {
+  type        = string
+  description = "Hostname of the frontend App Service in staging (e.g. aie-web-staging.azurewebsites.net)"
+}

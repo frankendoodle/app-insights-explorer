@@ -82,6 +82,14 @@ resource "azuread_application_federated_identity_credential" "ci_env_test" {
   subject        = "repo:${var.github_owner}/${var.github_repo}:environment:test"
 }
 
+resource "azuread_application_federated_identity_credential" "ci_env_staging" {
+  application_id = data.azuread_application.cicd_sp.id
+  display_name   = "github-ci-env-staging"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:${var.github_owner}/${var.github_repo}:environment:staging"
+}
+
 # AcrPush — allows the pipeline to push built images to the registry
 resource "azurerm_role_assignment" "cicd_acr_push" {
   scope                = azurerm_container_registry.acr.id
@@ -98,6 +106,7 @@ resource "azuread_application" "sso" {
     redirect_uris = [
       "http://localhost:3000/api/auth/callback/microsoft-entra-id",
       "https://${var.sso_test_hostname}/api/auth/callback/microsoft-entra-id",
+      "https://${var.sso_staging_hostname}/api/auth/callback/microsoft-entra-id",
     ]
   }
 
@@ -178,6 +187,11 @@ resource "github_branch_protection" "development" {
 resource "github_repository_environment" "test" {
   repository  = var.github_repo
   environment = "test"
+}
+
+resource "github_repository_environment" "staging" {
+  repository  = var.github_repo
+  environment = "staging"
 }
 
 # ── Outputs ───────────────────────────────────────────────────────────────────

@@ -1,0 +1,154 @@
+name: CI — Build, Push, Deploy to STAGING
+
+on:
+  push:
+    branches:
+      - 'release-*'
+  workflow_dispatch:
+
+permissions:
+  id-token: write  # required for OIDC authentication to Azure
+  contents: read
+
+jobs:
+  build-web:
+    name: Build & Push Web
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Authenticate to ACR
+        run: az acr login --name ${{ vars.ACR_NAME }}
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build & push Docker image
+        run: |
+          IMAGE=${{ vars.ACR_NAME }}.azurecr.io/app-insights-web
+          docker build frontend/ \
+            --build-arg NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }} \
+            --build-arg NEXT_PUBLIC_BACKEND_API_SECRET=${{ secrets.BACKEND_API_SECRET }} \
+            --tag $IMAGE:${{ github.sha }}
+          docker push $IMAGE:${{ github.sha }}
+          docker tag $IMAGE:${{ github.sha }} $IMAGE:staging
+          docker push $IMAGE:staging
+
+  build-api:
+    name: Build & Push API
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Authenticate to ACR
+        run: az acr login --name ${{ vars.ACR_NAME }}
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Lint
+        working-directory: backend
+        run: npm run lint
+
+      - name: Test
+        working-directory: backend
+        run: npm run test
+
+      - name: Build & push Docker image
+        run: |
+          IMAGE=${{ vars.ACR_NAME }}.azurecr.io/app-insights-api
+          docker build backend/ --tag $IMAGE:${{ github.sha }}
+          docker push $IMAGE:${{ github.sha }}
+          docker tag $IMAGE:${{ github.sha }} $IMAGE:staging
+          docker push $IMAGE:staging
+
+  deploy:
+    name: Deploy to STAGING
+    runs-on: ubuntu-latest
+    needs: [build-web, build-api]
+    environment: staging
+    steps:
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify infrastructure exists
+        run: |
+          STATE=$(az webapp show \
+            --name aie-api-staging \
+            --resource-group rg-app-insights-explorer-staging \
+            --query state -o tsv 2>/dev/null || echo "NotFound")
+          if [ "$STATE" = "NotFound" ]; then
+            echo "::error::Infrastructure not ready. Run the 'Infrastructure — Terraform Apply (STAGING)' workflow first."
+            exit 1
+          fi
+          echo "Infrastructure verified (App Service state: $STATE)"
+
+      - name: Update API container image
+        run: |
+          az webapp config appsettings set \
+            --name aie-api-staging \
+            --resource-group rg-app-insights-explorer-staging \
+            --settings DOCKER_CUSTOM_IMAGE_NAME=${{ vars.ACR_NAME }}.azurecr.io/app-insights-api:${{ github.sha }}
+
+      - name: Update Web container image
+        run: |
+          az webapp config appsettings set \
+            --name aie-web-staging \
+            --resource-group rg-app-insights-explorer-staging \
+            --settings DOCKER_CUSTOM_IMAGE_NAME=${{ vars.ACR_NAME }}.azurecr.io/app-insights-web:${{ github.sha }}
+
+      - name: Wait for apps to become healthy
+        run: |
+          echo "Polling until both App Services respond..."
+          for i in $(seq 1 24); do
+            API=$(curl -s -o /dev/null -w "%{http_code}" https://aie-api-staging.azurewebsites.net/api/environments)
+            WEB=$(curl -s -o /dev/null -w "%{http_code}" https://aie-web-staging.azurewebsites.net)
+            echo "Attempt $i/24 — API: $API  Web: $WEB"
+            if [ "$API" != "503" ] && [ "$API" != "000" ] && [ "$WEB" != "503" ] && [ "$WEB" != "000" ]; then
+              echo "Both apps are responding."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Apps did not become healthy within 6 minutes."
+          exit 1
+
+  smoke-test:
+    name: Smoke Test (staging)
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run smoke test
+        run: |
+          chmod +x build-release/scripts/smoke-test.sh
+          build-release/scripts/smoke-test.sh \
+            "https://aie-web-staging.azurewebsites.net" \
+            "https://aie-api-staging.azurewebsites.net"
