@@ -35,7 +35,14 @@
       "Bash(node:*)",
       "mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql",
       "Read(//c/Users/fgoulart/.claude/**)",
-      "Read(//c/Users/fgoulart/.claude/skills/**)"
+      "Read(//c/Users/fgoulart/.claude/skills/**)",
+      "Bash(git symbolic-ref *)",
+      "Skill(mm-claude-toolkit:mm:config)",
+      "mcp__claude_ai_Atlassian__atlassianUserInfo",
+      "mcp__claude_ai_Atlassian__getJiraProjectIssueTypesMetadata",
+      "mcp__claude_ai_Atlassian__getTransitionsForJiraIssue",
+      "mcp__claude_ai_Atlassian__transitionJiraIssue",
+      "mcp__claude_ai_Atlassian__editJiraIssue"
     ]
   }
 }
