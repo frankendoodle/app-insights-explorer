@@ -2,7 +2,7 @@
 ticket: PLATFORM-29
 slug: set-up-git-actions-for-sample-web-application
 summary: "Set up git actions for sample web application"
-status: fetched
+status: plan-complete
 issuetype: Story
 fetched: 2026-04-30T15:10:00-07:00
 jira_updated: 2026-04-30T15:02:43.744-0700
@@ -58,8 +58,15 @@ subtasks:
     summary: "Validate CI workflow with a merge to development"
     status: "Created"
 confluence: []
-specs: []
-plans: []
+specs:
+  - slug: github-actions-setup
+    discovery: specs/github-actions-setup-discovery.md
+    spec: specs/github-actions-setup-spec-2026-05-01.md
+    subtask_key: PLATFORM-329
+    pushed: 2026-05-01T00:00:00Z
+plans:
+  - slug: github-actions-setup
+    plan: plans/github-actions-setup-plan-2026-05-01.md
 container_subtask_key: null
 ---
 
@@ -72,15 +79,17 @@ Dossier for PLATFORM-29 — covers specs, plans, and pipeline status for setting
 
 ## Status at a Glance
 
-No specs written yet. Run `/jira:spec-feature PLATFORM-29` to begin.
+| Spec | Spec Status | Plan | Implementation |
+|---|---|---|---|
+| github-actions-setup | final, pushed | complete | — |
 
-**Next actions:** `/jira:spec-feature PLATFORM-29`
+**Next actions:** `/jira:implement-plan PLATFORM-29`
 
 ## Pipeline
 
 - [x] fetch
-- [ ] spec-feature
-- [ ] plan-code
+- [x] spec-feature
+- [x] plan-code
 - [ ] implement
 - [ ] verify
 - [ ] qa-handoff
@@ -89,8 +98,13 @@ No specs written yet. Run `/jira:spec-feature PLATFORM-29` to begin.
 ## Files
 
 - [ticket.md](ticket.md) — Jira ticket snapshot
-- specs/ — (empty)
-- plans/ — (empty)
+- specs/
+  - [github-actions-setup-discovery.md](specs/github-actions-setup-discovery.md)
+  - [github-actions-setup-spec-2026-05-01.md](specs/github-actions-setup-spec-2026-05-01.md)
+  - [github-actions-setup-challenges-2026-05-01.md](specs/github-actions-setup-challenges-2026-05-01.md) — all resolved
+- plans/
+  - [manifest.md](plans/manifest.md)
+  - [github-actions-setup-plan-2026-05-01.md](plans/github-actions-setup-plan-2026-05-01.md)
 - confluence/ — empty
 - validation/ — (empty)
 
