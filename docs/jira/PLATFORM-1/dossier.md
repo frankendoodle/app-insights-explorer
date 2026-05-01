@@ -2,7 +2,7 @@
 ticket: PLATFORM-1
 slug: provision-web-application-infrastructure-by-hand-for-sample
 summary: "Provision web application infrastructure by hand for sample web application"
-status: spec-complete
+status: archived
 issuetype: Story
 fetched: 2026-04-27T16:45:00-07:00
 jira_updated: 2026-04-27T16:33:41.572-0700
@@ -87,7 +87,7 @@ Dossier for PLATFORM-1 — covers specs, plans, and pipeline status for the manu
 - [x] implement
 - [ ] verify
 - [ ] qa-handoff
-- [ ] archive
+- [x] archive
 
 ## Files
 
