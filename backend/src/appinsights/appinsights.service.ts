@@ -10,7 +10,6 @@ export class AppInsightsService {
   constructor() {
     const credential = new DefaultAzureCredential({
       excludeEnvironmentCredential: true,
-      excludeManagedIdentityCredential: true,
       excludeAzurePowerShellCredential: true,
     } as DefaultAzureCredentialOptions);
     this.client = new LogsQueryClient(credential);
