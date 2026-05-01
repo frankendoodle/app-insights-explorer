@@ -1,0 +1,33 @@
+name: PR Validation
+on:
+  pull_request:
+    branches:
+      - development
+jobs:
+  build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: app-insights-explorer-frontend:pr
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://localhost:3001
+
+      - name: Build API Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: app-insights-explorer-api:pr
