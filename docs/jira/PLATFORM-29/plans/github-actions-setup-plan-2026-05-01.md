@@ -651,6 +651,45 @@ validation_commands:
 
 ---
 
+### Lessons Learned — End-to-End Validation
+
+These gaps were discovered during the first successful end-to-end run and are documented here so future environment setups (staging, production) don't repeat them.
+
+#### 1. NextAuth v5 renamed the Azure AD provider — update redirect URIs accordingly
+
+NextAuth v4 used `azure-ad` as the provider ID; NextAuth v5 renamed it to `microsoft-entra-id`. The callback path NextAuth sends in the OAuth redirect request is:
+
+```
+/api/auth/callback/microsoft-entra-id
+```
+
+Any App Registration redirect URI using the old `azure-ad` suffix will produce `AADSTS50011` and block login entirely. This is easy to miss because the old URI is syntactically valid — Azure accepts it, it just never matches.
+
+**Fix:** In the App Registration → Authentication → Redirect URIs, ensure the value is:
+```
+https://<app-hostname>/api/auth/callback/microsoft-entra-id
+```
+
+Not `azure-ad`. Not `azuread`. `microsoft-entra-id`.
+
+#### 2. Every runtime env var needs both a Key Vault secret AND an App Service app setting
+
+Secrets added to Key Vault are invisible to the App Service unless there is a corresponding app setting that references them. The pattern is:
+
+| App setting name | App setting value |
+|---|---|
+| `AppRegistrationTenantId` | `@Microsoft.KeyVault(VaultName=kv-aie-test-2;SecretName=AppRegistrationTenantId)` |
+
+During this setup, `AppRegistrationTenantId` was added to Key Vault but the matching app setting was never created. The app launched, KV references for the other three settings resolved fine, and the error only surfaced at OAuth callback time — making it harder to connect the symptom to the cause.
+
+**Fix for future environments:** treat Key Vault and App Settings as a pair. When adding a secret to KV, immediately add the matching `@Microsoft.KeyVault(...)` app setting. Use the portal Configuration blade as the checklist — every secret the app reads at runtime must appear there with a green status icon.
+
+#### 3. Stop/start (not restart) forces Key Vault reference re-evaluation
+
+After a role assignment change, App Service may show red Key Vault reference icons even after a restart. A full `stop` followed by `start` clears the cached resolution state and forces a fresh evaluation. This is not a permissions issue — it is a stale cache. Allow 2-3 minutes after `start` before checking the portal.
+
+---
+
 ### Final: Close-out
 
 This plan is not complete until the close-out protocol in `manifest.md` has been followed. Do not mark this plan as complete without completing close-out.
