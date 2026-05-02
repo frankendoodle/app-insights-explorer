@@ -688,6 +688,18 @@ During this setup, `AppRegistrationTenantId` was added to Key Vault but the matc
 
 After a role assignment change, App Service may show red Key Vault reference icons even after a restart. A full `stop` followed by `start` clears the cached resolution state and forces a fresh evaluation. This is not a permissions issue — it is a stale cache. Allow 2-3 minutes after `start` before checking the portal.
 
+#### 4. `NEXT_PUBLIC_*` variables must be Docker build args — App Service app settings have no effect
+
+Next.js replaces `NEXT_PUBLIC_*` variables with literal string values at Webpack build time. By the time the container runs on App Service, the bundle is already compiled. Setting a `NEXT_PUBLIC_*` app setting (including a Key Vault reference) on the App Service does nothing — the running app reads the value baked in at image build time.
+
+**Fix:** Pass every `NEXT_PUBLIC_*` variable as a `build-args` entry in the `docker/build-push-action` step. For secrets, source them from GitHub Actions secrets (`${{ secrets.NAME }}`); for URLs, source from variables (`${{ vars.NAME }}`).
+
+#### 5. GitHub Actions environment-level variables are only available to jobs that declare `environment:`
+
+A job without `environment: <name>` cannot read `vars.*` scoped to that environment — the variable resolves to an empty string with no error. This bit us with `vars.WEBAPP_API` in the `build-and-push` job: the frontend image was built with a blank API URL because only the `deploy` job declared `environment: test`.
+
+**Fix:** Any job that reads environment-level variables must declare `environment: <name>`. For `ci-test.yml` this means both `build-and-push` and `deploy` carry `environment: test`. This also applies when adding staging/production environments — each environment's build job must declare its own environment name.
+
 ---
 
 ### Final: Close-out
