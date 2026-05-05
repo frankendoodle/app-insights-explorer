@@ -51,7 +51,7 @@ read -r -p "Is this the correct subscription? (y/N) " confirm
 # ── Interactive configuration ─────────────────────────────────────────────────
 section "Configuration — press Enter to accept the default"
 
-LOCATION=$(prompt        "LOCATION"           "Azure region"                                      "eastus")
+LOCATION=$(prompt        "LOCATION"           "Azure region"                                      "westus2")
 TFSTATE_RG=$(prompt      "TFSTATE_RG"         "Resource group name for Terraform state storage"   "rg-aie-tfstate-3")
 TFSTATE_SA=$(prompt      "TFSTATE_SA"         "Storage account name (globally unique, lowercase)"  "aietfstate3")
 TFSTATE_CONTAINER=$(prompt "TFSTATE_CONTAINER" "Blob container name"                              "tfstate")
