@@ -18,13 +18,16 @@ resource "azurerm_linux_web_app" "frontend" {
   }
 
   app_settings = {
-    # Settings added in Task 11
-  }
+    # Key Vault references — resolved at startup via managed identity
+    "AppRegistrationClientId"     = local.kv_ref.app_reg_client_id
+    "AppRegistrationClientSecret" = local.kv_ref.app_reg_client_secret
+    "BackendApiSecret"            = local.kv_ref.backend_api_secret
+    "NextAuthSecret"              = local.kv_ref.nextauth_secret
 
-  lifecycle {
-    ignore_changes = [
-      app_settings,
-    ]
+    # Plain text — not sensitive, environment-specific
+    "AppRegistrationTenantId" = "consumers"
+    "NEXTAUTH_URL"            = "https://app-aie-frontend-test-tfg.azurewebsites.net"
+    "NEXT_PUBLIC_API_URL"     = "https://app-aie-api-test-tfg.azurewebsites.net"
   }
 }
 
@@ -48,12 +51,12 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   app_settings = {
-    # Settings added in Task 11
-  }
+    # Key Vault references — resolved at startup via managed identity
+    "AnthropicApiKey"  = local.kv_ref.anthropic_api_key
+    "BackendApiSecret" = local.kv_ref.backend_api_secret
 
-  lifecycle {
-    ignore_changes = [
-      app_settings,
-    ]
+    # Plain text — not sensitive, environment-specific
+    "AppRegistrationTenantId" = "consumers"
+    "FRONTEND_ORIGIN"         = "https://app-aie-frontend-test-tfg.azurewebsites.net"
   }
 }
