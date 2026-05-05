@@ -690,6 +690,90 @@ After a role assignment change, App Service may show red Key Vault reference ico
 
 ---
 
+### Staging Terraform Checklist
+
+Everything below was discovered manually during the test environment setup. Terraform for staging must cover all of it — anything left out means a debugging session identical to the one we just finished.
+
+#### App Service resources (web + API)
+
+| Resource | Notes |
+|---|---|
+| App Service Plan | Linux, at minimum B1 |
+| Web app (`aie-web-staging`) | Linux container, port 3000 |
+| API app (`aie-api-staging`) | Linux container, port 3001 |
+| System-assigned managed identity on both | `identity { type = "SystemAssigned" }` |
+| `acrUseManagedIdentityCreds = true` on both | App setting; without this, ACR pulls fail with `ImagePullUnauthorized` |
+
+#### Role assignments
+
+| Principal | Role | Scope |
+|---|---|---|
+| Web app managed identity | AcrPull | ACR |
+| API app managed identity | AcrPull | ACR |
+| Web app managed identity | Key Vault Secrets User | Key Vault |
+| API app managed identity | Key Vault Secrets User | Key Vault |
+
+All four are required. Missing any one causes a silent failure that is hard to trace.
+
+#### Key Vault
+
+| Item | Notes |
+|---|---|
+| `enableRbacAuthorization = true` | Required for role-based KV access |
+| All secrets provisioned before first deploy | App will start but KV references will show red if secrets are absent |
+
+#### App settings — web app (`aie-web-staging`)
+
+Every row here needs both a KV secret AND a matching `@Microsoft.KeyVault(...)` app setting. Do not add one without the other.
+
+| App setting | Value |
+|---|---|
+| `AppRegistrationClientId` | `@Microsoft.KeyVault(VaultName=...;SecretName=AppRegistrationClientId)` |
+| `AppRegistrationClientSecret` | `@Microsoft.KeyVault(VaultName=...;SecretName=AppRegistrationClientSecret)` |
+| `AppRegistrationTenantId` | `@Microsoft.KeyVault(VaultName=...;SecretName=AppRegistrationTenantId)` — **was missing in test** |
+| `NextAuthSecret` | `@Microsoft.KeyVault(VaultName=...;SecretName=NextAuthSecret)` |
+| `NEXTAUTH_URL` | `https://aie-web-staging.azurewebsites.net` — plain value |
+| `WEBSITES_PORT` | `3000` |
+
+`NEXT_PUBLIC_BACKEND_API_SECRET` is **not** an app setting — it is baked into the Docker image at build time via GitHub Actions build arg. Do not add it here.
+
+#### App settings — API app (`aie-api-staging`)
+
+| App setting | Value |
+|---|---|
+| `BACKEND_API_SECRET` | `@Microsoft.KeyVault(VaultName=...;SecretName=BackendApiSecret)` |
+| `AnthropicApiKey` | `@Microsoft.KeyVault(VaultName=...;SecretName=AnthropicApiKey)` |
+| `FRONTEND_ORIGIN` | `https://aie-web-staging.azurewebsites.net` — plain value, **was missing in test** (caused CORS failure) |
+| `WEBSITES_PORT` | `3001` |
+
+#### SSO App Registration redirect URI
+
+Must be added to the existing App Registration (or a staging-specific one):
+```
+https://aie-web-staging.azurewebsites.net/api/auth/callback/microsoft-entra-id
+```
+
+The provider ID is `microsoft-entra-id` (NextAuth v5). Using `azure-ad` causes `AADSTS50011` and blocks all logins.
+
+#### GitHub environment (`staging`)
+
+| Variable | Value |
+|---|---|
+| `ACR_LOGIN_SERVER` | `acrappinsightstest2.azurecr.io` (shared ACR) |
+| `WEBAPP_FRONTEND` | `aie-web-staging` |
+| `WEBAPP_API` | `aie-api-staging` |
+| `RESOURCE_GROUP` | `rg-app-insights-explorer-staging` |
+
+`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` stay at repo level (shared across environments).
+
+#### GitHub Actions workflow — `ci-staging.yml`
+
+- Both `build-and-push` **and** `deploy` jobs must declare `environment: staging`
+- Without `environment:` on `build-and-push`, `vars.WEBAPP_API` resolves to empty string and the frontend is built with a blank API URL
+- `NEXT_PUBLIC_BACKEND_API_SECRET=${{ secrets.BACKEND_API_SECRET }}` must be a build arg on the frontend image step
+
+---
+
 ### Final: Close-out
 
 This plan is not complete until the close-out protocol in `manifest.md` has been followed. Do not mark this plan as complete without completing close-out.
