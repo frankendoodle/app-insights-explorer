@@ -104,6 +104,11 @@ In GitHub: repo → Settings → Secrets and variables → Actions → **Variabl
 | `TF_BACKEND_RESOURCE_GROUP` | `<TFSTATE_RG>` from bootstrap output |
 | `TF_BACKEND_STORAGE_ACCOUNT` | `<TFSTATE_SA>` from bootstrap output |
 
+> ⚠ **Potential issue — verify this variable name maps correctly in the workflow.**
+> `TF_BACKEND_STORAGE_ACCOUNT` refers to the **Azure Storage Account** (e.g. `aietfstate3`), NOT the blob container (`tfstate3`).
+> The blob container name is passed as a hardcoded `-backend-config="container_name=tfstate3"` in the workflow `terraform init` step — it is not a GitHub Variable.
+> If CI fails on `terraform init` with a backend config error, check that the workflow's `container_name` matches what bootstrap actually created (run `az storage container list --account-name <TFSTATE_SA> --auth-mode login` to verify).
+
 ---
 
 ### Sequence Step 3 — Init infra/shared/ and validate azuread provider (Task 3)
@@ -114,7 +119,7 @@ Set-Location infra/shared
 terraform init `
   -backend-config="resource_group_name=<TFSTATE_RG>" `
   -backend-config="storage_account_name=<TFSTATE_SA>" `
-  -backend-config="container_name=tfstate" `
+  -backend-config="container_name=tfstate3" `
   -backend-config="key=shared.tfstate"
 
 terraform validate
@@ -203,7 +208,7 @@ Set-Location ..\envs\test
 terraform init `
   -backend-config="resource_group_name=<TFSTATE_RG>" `
   -backend-config="storage_account_name=<TFSTATE_SA>" `
-  -backend-config="container_name=tfstate" `
+  -backend-config="container_name=tfstate3" `
   -backend-config="key=test.tfstate"
 
 terraform apply `
@@ -225,7 +230,9 @@ terraform output kv_name               # kv-aie-test-tfg
 
 ### Sequence Step 8 — Set 3 more GitHub Actions Variables
 
-In GitHub → Variables:
+These are **environment-scoped** variables (not repo-level) because they differ per environment (test, staging, prod).
+
+In GitHub → repo → Settings → Environments → `test` → Environment variables:
 
 | Variable name | Value |
 |---|---|
@@ -541,7 +548,7 @@ Create `infra/shared/backend.tf`:
 #   terraform init \
 #     -backend-config="resource_group_name=<TFSTATE_RG>" \
 #     -backend-config="storage_account_name=<TFSTATE_SA>" \
-#     -backend-config="container_name=tfstate" \
+#     -backend-config="container_name=tfstate3" \
 #     -backend-config="key=shared.tfstate"
 #
 terraform {
@@ -593,7 +600,7 @@ Create `infra/envs/test/backend.tf`:
 #   terraform init \
 #     -backend-config="resource_group_name=<TFSTATE_RG>" \
 #     -backend-config="storage_account_name=<TFSTATE_SA>" \
-#     -backend-config="container_name=tfstate" \
+#     -backend-config="container_name=tfstate3" \
 #     -backend-config="key=test.tfstate"
 #
 terraform {
@@ -640,7 +647,7 @@ cd infra/shared
 terraform init \
   -backend-config="resource_group_name=<TFSTATE_RG>" \
   -backend-config="storage_account_name=<TFSTATE_SA>" \
-  -backend-config="container_name=tfstate" \
+  -backend-config="container_name=tfstate3" \
   -backend-config="key=shared.tfstate"
 terraform validate
 ```
@@ -652,7 +659,7 @@ cd ../envs/test
 terraform init \
   -backend-config="resource_group_name=<TFSTATE_RG>" \
   -backend-config="storage_account_name=<TFSTATE_SA>" \
-  -backend-config="container_name=tfstate" \
+  -backend-config="container_name=tfstate3" \
   -backend-config="key=test.tfstate"
 terraform validate
 ```
@@ -1028,7 +1035,7 @@ cd infra/envs/test
 terraform init \
   -backend-config="resource_group_name=<TFSTATE_RG>" \
   -backend-config="storage_account_name=<TFSTATE_SA>" \
-  -backend-config="container_name=tfstate" \
+  -backend-config="container_name=tfstate3" \
   -backend-config="key=test.tfstate"
 
 terraform plan \
