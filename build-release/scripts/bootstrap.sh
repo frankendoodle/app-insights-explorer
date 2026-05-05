@@ -135,41 +135,34 @@ SP_OBJECT_ID=$(az ad sp show --id "$SP_APP_ID" --query id -o tsv | tr -d '\r')
 # ── Role assignments ──────────────────────────────────────────────────────────
 section "Role assignments"
 
-EXISTING_STORAGE_ROLE=$(az role assignment list \
-  --assignee "$SP_OBJECT_ID" \
-  --role "Storage Blob Data Contributor" \
-  --scope "$STORAGE_RESOURCE_ID" \
-  --query "[0].id" -o tsv 2>/dev/null || echo "")
+# Validate critical variables before attempting role assignments
+info "Debug — variable values:"
+info "  SUBSCRIPTION_ID    : '${SUBSCRIPTION_ID}'"
+info "  SP_OBJECT_ID       : '${SP_OBJECT_ID}'"
+info "  STORAGE_RESOURCE_ID: '${STORAGE_RESOURCE_ID}'"
+echo ""
+
+[[ -n "$SUBSCRIPTION_ID" ]]     || { echo "ERROR: SUBSCRIPTION_ID is empty — check az login"; exit 1; }
+[[ -n "$SP_OBJECT_ID" ]]        || { echo "ERROR: SP_OBJECT_ID is empty — SP lookup failed"; exit 1; }
+[[ -n "$STORAGE_RESOURCE_ID" ]] || { echo "ERROR: STORAGE_RESOURCE_ID is empty"; exit 1; }
+
+EXISTING_STORAGE_ROLE=$(az role assignment list --assignee "$SP_OBJECT_ID" --role "Storage Blob Data Contributor" --scope "$STORAGE_RESOURCE_ID" --query "[0].id" -o tsv 2>/dev/null | tr -d '\r' || echo "")
 
 if [[ -n "$EXISTING_STORAGE_ROLE" && "$EXISTING_STORAGE_ROLE" != "null" ]]; then
   skip "Storage Blob Data Contributor already assigned"
 else
   info "Granting Storage Blob Data Contributor on TF state storage account"
-  az role assignment create \
-    --assignee-object-id "$SP_OBJECT_ID" \
-    --assignee-principal-type ServicePrincipal \
-    --role "Storage Blob Data Contributor" \
-    --scope "$STORAGE_RESOURCE_ID" \
-    --output none
+  az role assignment create --assignee-object-id "$SP_OBJECT_ID" --assignee-principal-type ServicePrincipal --role "Storage Blob Data Contributor" --scope "$STORAGE_RESOURCE_ID" --output none
   success "Storage Blob Data Contributor assigned"
 fi
 
-EXISTING_SUB_ROLE=$(az role assignment list \
-  --assignee "$SP_OBJECT_ID" \
-  --role "Contributor" \
-  --scope "/subscriptions/$SUBSCRIPTION_ID" \
-  --query "[0].id" -o tsv 2>/dev/null || echo "")
+EXISTING_SUB_ROLE=$(az role assignment list --assignee "$SP_OBJECT_ID" --role "Contributor" --scope "/subscriptions/$SUBSCRIPTION_ID" --query "[0].id" -o tsv 2>/dev/null | tr -d '\r' || echo "")
 
 if [[ -n "$EXISTING_SUB_ROLE" && "$EXISTING_SUB_ROLE" != "null" ]]; then
   skip "Contributor on subscription already assigned"
 else
   info "Granting Contributor on subscription"
-  az role assignment create \
-    --assignee-object-id "$SP_OBJECT_ID" \
-    --assignee-principal-type ServicePrincipal \
-    --role "Contributor" \
-    --scope "/subscriptions/$SUBSCRIPTION_ID" \
-    --output none
+  az role assignment create --assignee-object-id "$SP_OBJECT_ID" --assignee-principal-type ServicePrincipal --role "Contributor" --scope "/subscriptions/$SUBSCRIPTION_ID" --output none
   success "Contributor assigned"
 fi
 
