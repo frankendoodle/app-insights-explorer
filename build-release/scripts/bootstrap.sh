@@ -113,10 +113,7 @@ else
   success "Blob container created"
 fi
 
-STORAGE_RESOURCE_ID=$(az storage account show \
-  --name "$TFSTATE_SA" \
-  --resource-group "$TFSTATE_RG" \
-  --query id -o tsv)
+STORAGE_RESOURCE_ID="/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$TFSTATE_RG/providers/Microsoft.Storage/storageAccounts/$TFSTATE_SA"
 
 # ── CI/CD Service Principal ───────────────────────────────────────────────────
 section "CI/CD Service Principal"
