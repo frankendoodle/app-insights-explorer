@@ -145,7 +145,7 @@ section "Role assignments"
 assign_role() {
   local label="$1" role_def_id="$2" scope="$3"
   local ra_id
-  ra_id=$(python3 -c "import uuid; print(uuid.uuid5(uuid.NAMESPACE_URL, '${SP_OBJECT_ID}:${scope}:${role_def_id}'))")
+  ra_id=$(uuidgen)
   info "Assigning ${label}..."
   local out
   if out=$(az rest --method PUT \
