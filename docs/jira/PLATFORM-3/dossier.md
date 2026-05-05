@@ -2,7 +2,7 @@
 ticket: PLATFORM-3
 slug: apply-terraform-release-for-sample-web-application
 summary: "Apply terraform release for sample web application"
-status: plan-complete
+status: implemented
 issuetype: Story
 fetched: 2026-05-04T20:30:00-07:00
 jira_updated: 2026-05-04T13:25:17.896-0700
@@ -45,16 +45,16 @@ Dossier for PLATFORM-3 — covers specs, plans, and pipeline status for replacin
 
 | Spec | Spec Status | Plan | Implementation |
 |---|---|---|---|
-| terraform-release | final, pushed | — | — |
+| terraform-release | final, pushed | approved | done |
 
-**Next actions:** `/jira:plan-code PLATFORM-3`
+**Next actions:** `/jira:verify PLATFORM-3`
 
 ## Pipeline
 
 - [x] fetch
 - [x] spec-feature
-- [ ] plan-code
-- [ ] implement
+- [x] plan-code
+- [x] implement
 - [ ] verify
 - [ ] qa-handoff
 - [ ] archive
@@ -70,6 +70,13 @@ Dossier for PLATFORM-3 — covers specs, plans, and pipeline status for replacin
 ## Linked Issues
 
 (none)
+
+## Implementation
+
+Branch: `fg/platform-3`
+Final commit: 121546d (PLATFORM-3: add Key Vault secret-population and App Service stop/start steps to ci-test.yml)
+
+12 tasks completed covering: bootstrap.sh idempotency, infra/shared/ (ACR, SSO App Registration Path A/B, OIDC fedcred), infra/envs/test/ (resource group, ASP, web apps, Key Vault, RBAC x5, App Service settings), and ci-test.yml Key Vault secret-population extension.
 
 ## Notes
 

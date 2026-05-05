@@ -3,12 +3,13 @@ title: "PLATFORM-3 — Plan Manifest"
 ticket: PLATFORM-3
 date: 2026-05-04
 tags: [ai/generated, jira/plan-manifest]
-status: plans_complete
-plans:
+status: complete
+plans: []
+completed:
   - slug: terraform-release
     file: terraform-release-plan-2026-05-04.md
     spec: specs/terraform-release-spec-2026-05-04.md
-    status: in_progress
+    status: complete
     started_at: 2026-05-04T17:30:00-07:00
     worker_id: 2026-05-04T17-30-a3f2
     implement_subtask_key: PLATFORM-355
@@ -17,8 +18,8 @@ plans:
     slot: 1
     bundle_id: null
     worktree: null
-    merge_commit: null
-    completed_date: null
+    merge_commit: 121546d
+    completed_date: 2026-05-05
 ---
 
 # Terraform IaC Release — Plan Manifest
