@@ -38,9 +38,9 @@ prompt() {
 # ── Preflight ─────────────────────────────────────────────────────────────────
 section "Preflight — current Azure context"
 
-SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-TENANT_ID=$(az account show --query tenantId -o tsv)
-SUBSCRIPTION_NAME=$(az account show --query name -o tsv)
+SUBSCRIPTION_ID=$(az account show --query id -o tsv | tr -d '\r')
+TENANT_ID=$(az account show --query tenantId -o tsv | tr -d '\r')
+SUBSCRIPTION_NAME=$(az account show --query name -o tsv | tr -d '\r')
 
 info "Subscription : $SUBSCRIPTION_NAME ($SUBSCRIPTION_ID)"
 info "Tenant       : $TENANT_ID"
@@ -118,19 +118,19 @@ STORAGE_RESOURCE_ID="/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$TFSTATE_RG/
 # ── CI/CD Service Principal ───────────────────────────────────────────────────
 section "CI/CD Service Principal"
 
-EXISTING_APP_ID=$(az ad app list --display-name "$SP_NAME" --query "[0].appId" -o tsv 2>/dev/null || echo "")
+EXISTING_APP_ID=$(az ad app list --display-name "$SP_NAME" --query "[0].appId" -o tsv 2>/dev/null | tr -d '\r' || echo "")
 
 if [[ -n "$EXISTING_APP_ID" && "$EXISTING_APP_ID" != "null" ]]; then
   skip "App Registration already exists: $SP_NAME (appId: $EXISTING_APP_ID)"
   SP_APP_ID="$EXISTING_APP_ID"
 else
   info "Creating App Registration + Service Principal: $SP_NAME"
-  SP_APP_ID=$(az ad app create --display-name "$SP_NAME" --query appId -o tsv)
+  SP_APP_ID=$(az ad app create --display-name "$SP_NAME" --query appId -o tsv | tr -d '\r')
   az ad sp create --id "$SP_APP_ID" --output none
   success "App Registration + Service Principal created (appId: $SP_APP_ID)"
 fi
 
-SP_OBJECT_ID=$(az ad sp show --id "$SP_APP_ID" --query id -o tsv)
+SP_OBJECT_ID=$(az ad sp show --id "$SP_APP_ID" --query id -o tsv | tr -d '\r')
 
 # ── Role assignments ──────────────────────────────────────────────────────────
 section "Role assignments"
