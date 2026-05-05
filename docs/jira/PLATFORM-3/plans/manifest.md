@@ -8,7 +8,9 @@ plans:
   - slug: terraform-release
     file: terraform-release-plan-2026-05-04.md
     spec: specs/terraform-release-spec-2026-05-04.md
-    status: approved
+    status: in_progress
+    started_at: 2026-05-04T17:30:00-07:00
+    worker_id: 2026-05-04T17-30-a3f2
     implement_subtask_key: PLATFORM-355
     depends_on: []
     parallel_with: []
