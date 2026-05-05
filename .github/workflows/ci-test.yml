@@ -88,6 +88,24 @@ jobs:
           app-name: ${{ vars.WEBAPP_API }}
           images: ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_API }}:${{ needs.build-and-push.outputs.short_sha }}
 
+      - name: Populate Key Vault secrets from GitHub Secrets
+        run: |
+          az keyvault secret set --vault-name "${{ vars.KV_NAME }}" --name "AppRegistrationClientId"     --value "${{ secrets.AZURE_AD_CLIENT_ID }}"      --output none
+          az keyvault secret set --vault-name "${{ vars.KV_NAME }}" --name "AppRegistrationClientSecret" --value "${{ secrets.AZURE_AD_CLIENT_SECRET }}"   --output none
+          az keyvault secret set --vault-name "${{ vars.KV_NAME }}" --name "AnthropicApiKey"             --value "${{ secrets.ANTHROPIC_API_KEY }}"         --output none
+          az keyvault secret set --vault-name "${{ vars.KV_NAME }}" --name "BackendApiSecret"            --value "${{ secrets.BACKEND_API_SECRET }}"        --output none
+          az keyvault secret set --vault-name "${{ vars.KV_NAME }}" --name "NextAuthSecret"              --value "${{ secrets.NEXTAUTH_SECRET }}"           --output none
+
+      - name: Stop App Services to force Key Vault reference refresh
+        run: |
+          az webapp stop --name "${{ vars.WEBAPP_FRONTEND }}" --resource-group rg-app-insights-explorer-test-tfg
+          az webapp stop --name "${{ vars.WEBAPP_API }}"      --resource-group rg-app-insights-explorer-test-tfg
+
+      - name: Start App Services
+        run: |
+          az webapp start --name "${{ vars.WEBAPP_FRONTEND }}" --resource-group rg-app-insights-explorer-test-tfg
+          az webapp start --name "${{ vars.WEBAPP_API }}"      --resource-group rg-app-insights-explorer-test-tfg
+
       - name: Wait for App Services to start
         run: sleep 60
 
