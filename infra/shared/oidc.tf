@@ -19,3 +19,15 @@ resource "azuread_application_federated_identity_credential" "cicd_development" 
   issuer         = "https://token.actions.githubusercontent.com"
   subject        = "repo:frankendoodle/app-insights-explorer:ref:refs/heads/development"
 }
+
+# OIDC federated credential — scoped to the test environment.
+# Required when workflow jobs specify `environment: test` — GitHub issues a token
+# with subject `environment:test` instead of the branch-based subject above.
+resource "azuread_application_federated_identity_credential" "cicd_test_environment" {
+  application_id = data.azuread_application.cicd.id
+  display_name   = "github-environment-test"
+  description    = "GitHub Actions OIDC credential for the test environment."
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:frankendoodle/app-insights-explorer:environment:test"
+}
