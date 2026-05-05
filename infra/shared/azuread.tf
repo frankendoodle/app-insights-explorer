@@ -12,6 +12,10 @@ resource "azuread_application" "sso" {
   display_name     = "app-insights-explorer-sso-tfg"
   sign_in_audience = "AzureADandPersonalMicrosoftAccount"
 
+  api {
+    requested_access_token_version = 2
+  }
+
   web {
     redirect_uris = [
       "https://app-aie-frontend-test-tfg.azurewebsites.net/api/auth/callback/azure-ad",
