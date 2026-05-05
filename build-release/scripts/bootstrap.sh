@@ -135,42 +135,38 @@ SP_OBJECT_ID=$(az ad sp show --id "$SP_APP_ID" --query id -o tsv | tr -d '\r')
 # ── Role assignments ──────────────────────────────────────────────────────────
 section "Role assignments"
 
-# Validate critical variables before attempting role assignments
-info "Debug — variable values:"
-info "  SUBSCRIPTION_ID    : '${SUBSCRIPTION_ID}'"
-info "  SP_OBJECT_ID       : '${SP_OBJECT_ID}'"
-info "  STORAGE_RESOURCE_ID: '${STORAGE_RESOURCE_ID}'"
-echo ""
-
 [[ -n "$SUBSCRIPTION_ID" ]]     || { echo "ERROR: SUBSCRIPTION_ID is empty — check az login"; exit 1; }
 [[ -n "$SP_OBJECT_ID" ]]        || { echo "ERROR: SP_OBJECT_ID is empty — SP lookup failed"; exit 1; }
 [[ -n "$STORAGE_RESOURCE_ID" ]] || { echo "ERROR: STORAGE_RESOURCE_ID is empty"; exit 1; }
 
-# Pin the CLI session to the correct subscription before any ARM role assignment calls.
-# az role assignment re-acquires an ARM token from the active subscription context;
-# passing --subscription alone is not sufficient on personal (MSA) accounts.
-az account set --subscription "$SUBSCRIPTION_ID"
-info "Subscription context pinned: $SUBSCRIPTION_ID"
+# az role assignment create is broken on personal MSA subscriptions — it fails
+# to resolve the subscription context regardless of flags. Use az rest to call
+# the ARM role assignment API directly, which acquires its token differently.
+assign_role() {
+  local label="$1" role_def_id="$2" scope="$3"
+  local ra_id
+  ra_id=$(python3 -c "import uuid; print(uuid.uuid5(uuid.NAMESPACE_URL, '${SP_OBJECT_ID}:${scope}:${role_def_id}'))")
+  info "Assigning ${label}..."
+  local out
+  if out=$(az rest --method PUT \
+    --url "https://management.azure.com${scope}/providers/Microsoft.Authorization/roleAssignments/${ra_id}?api-version=2022-04-01" \
+    --body "{\"properties\":{\"roleDefinitionId\":\"/subscriptions/${SUBSCRIPTION_ID}/providers/Microsoft.Authorization/roleDefinitions/${role_def_id}\",\"principalId\":\"${SP_OBJECT_ID}\"}}" \
+    2>&1); then
+    success "${label} assigned"
+  elif echo "$out" | grep -q "RoleAssignmentExists"; then
+    skip "${label} already assigned"
+  else
+    echo "ERROR: Failed to assign ${label}:"
+    echo "$out"
+    exit 1
+  fi
+}
 
-EXISTING_STORAGE_ROLE=$(az role assignment list --assignee "$SP_APP_ID" --role "Storage Blob Data Contributor" --scope "$STORAGE_RESOURCE_ID" --subscription "$SUBSCRIPTION_ID" --query "[0].id" -o tsv 2>/dev/null | tr -d '\r' || echo "")
+# Storage Blob Data Contributor (ba92f5b4...) on the TF state storage account
+assign_role "Storage Blob Data Contributor" "ba92f5b4-2d11-453d-a403-e96b0029c9fe" "$STORAGE_RESOURCE_ID"
 
-if [[ -n "$EXISTING_STORAGE_ROLE" && "$EXISTING_STORAGE_ROLE" != "null" ]]; then
-  skip "Storage Blob Data Contributor already assigned"
-else
-  info "Granting Storage Blob Data Contributor on TF state storage account"
-  az role assignment create --assignee "$SP_APP_ID" --role "Storage Blob Data Contributor" --scope "$STORAGE_RESOURCE_ID" --subscription "$SUBSCRIPTION_ID" --output none
-  success "Storage Blob Data Contributor assigned"
-fi
-
-EXISTING_SUB_ROLE=$(az role assignment list --assignee "$SP_APP_ID" --role "Contributor" --scope "/subscriptions/$SUBSCRIPTION_ID" --subscription "$SUBSCRIPTION_ID" --query "[0].id" -o tsv 2>/dev/null | tr -d '\r' || echo "")
-
-if [[ -n "$EXISTING_SUB_ROLE" && "$EXISTING_SUB_ROLE" != "null" ]]; then
-  skip "Contributor on subscription already assigned"
-else
-  info "Granting Contributor on subscription"
-  az role assignment create --assignee "$SP_APP_ID" --role "Contributor" --scope "/subscriptions/$SUBSCRIPTION_ID" --subscription "$SUBSCRIPTION_ID" --output none
-  success "Contributor assigned"
-fi
+# Contributor (b24988ac...) on the subscription — needed for Terraform to manage resources
+assign_role "Contributor" "b24988ac-6180-42a0-ab88-20f7382dd24c" "/subscriptions/${SUBSCRIPTION_ID}"
 
 # ── Output ────────────────────────────────────────────────────────────────────
 section "Done — set these as GitHub Actions Variables"
