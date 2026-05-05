@@ -145,7 +145,7 @@ section "Role assignments"
 assign_role() {
   local label="$1" role_def_id="$2" scope="$3"
   local ra_id
-  ra_id=$(uuidgen)
+  ra_id=$(powershell.exe -Command "[guid]::NewGuid().ToString()" | tr -d '\r')
   info "Assigning ${label}..."
   local out
   if out=$(az rest --method PUT \
