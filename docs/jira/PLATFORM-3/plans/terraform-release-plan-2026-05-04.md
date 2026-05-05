@@ -26,6 +26,8 @@ validation_commands:
 
 **Testing Strategy:** Manual verification — each task runs `terraform plan` or `terraform apply` and verifies the result via `az` CLI or portal inspection.
 
+> **Windows / PowerShell note:** Multi-line commands in the per-task steps use shell line-continuation (`\`). In PowerShell, replace every trailing `\` with a backtick (`` ` ``). The **Pre-Merge Provisioning Sequence** section below uses PowerShell syntax throughout and is the primary reference for running these steps on Windows.
+
 **Validation Commands:**
 - `terraform validate`
 - `terraform plan`
@@ -56,6 +58,212 @@ validation_commands:
 | `infra/envs/test/settings.tf` | Create | App Service application settings for both web apps |
 | `infra/envs/test/outputs.tf` | Create | `webapp_frontend_name`, `webapp_api_name`, `kv_name` |
 | `.github/workflows/ci-test.yml` | Modify | Add Key Vault secret-population step to `deploy` job |
+
+---
+
+## Pre-Merge Provisioning Sequence
+
+All code is committed on `fg/platform-3` but the infrastructure does not exist yet. Complete the steps below in order before opening the PR. The PR merge triggers CI — if these steps are incomplete, CI will fail.
+
+Commands use **PowerShell** syntax. Replace placeholder values (e.g. `<TFSTATE_RG>`) with the actual values recorded at each step.
+
+---
+
+### Sequence Step 1 — Run bootstrap.sh
+
+bootstrap.sh is a bash script. Run it from WSL or Git Bash (not PowerShell):
+
+```bash
+# In WSL or Git Bash:
+cd /path/to/app-insights-explorer
+bash build-release/scripts/bootstrap.sh
+```
+
+When the script finishes, record **all six values** from the output:
+
+```
+AZURE_CLIENT_ID             = <SP_APP_ID>
+AZURE_TENANT_ID             = <TENANT_ID>
+AZURE_SUBSCRIPTION_ID       = <SUBSCRIPTION_ID>
+TF_BACKEND_RESOURCE_GROUP   = <TFSTATE_RG>
+TF_BACKEND_STORAGE_ACCOUNT  = <TFSTATE_SA>
+SP_OBJECT_ID (cicd_sp_object_id) = <SP_OBJECT_ID>
+```
+
+---
+
+### Sequence Step 2 — Set GitHub Actions Variables (5)
+
+In GitHub: repo → Settings → Secrets and variables → Actions → **Variables** tab → New repository variable
+
+| Variable name | Value |
+|---|---|
+| `AZURE_CLIENT_ID` | `<SP_APP_ID>` from bootstrap output |
+| `AZURE_TENANT_ID` | `<TENANT_ID>` from bootstrap output |
+| `AZURE_SUBSCRIPTION_ID` | `<SUBSCRIPTION_ID>` from bootstrap output |
+| `TF_BACKEND_RESOURCE_GROUP` | `<TFSTATE_RG>` from bootstrap output |
+| `TF_BACKEND_STORAGE_ACCOUNT` | `<TFSTATE_SA>` from bootstrap output |
+
+---
+
+### Sequence Step 3 — Init infra/shared/ and validate azuread provider (Task 3)
+
+```powershell
+Set-Location infra/shared
+
+terraform init `
+  -backend-config="resource_group_name=<TFSTATE_RG>" `
+  -backend-config="storage_account_name=<TFSTATE_SA>" `
+  -backend-config="container_name=tfstate" `
+  -backend-config="key=shared.tfstate"
+
+terraform validate
+```
+
+Run the validation apply to determine Path A vs. Path B:
+
+```powershell
+terraform apply `
+  -var cicd_sp_object_id=<SP_OBJECT_ID> `
+  -target azuread_application.validation `
+  -target azuread_service_principal.validation
+```
+
+**If apply succeeds → Path A (managed resources):**
+
+```powershell
+terraform destroy `
+  -var cicd_sp_object_id=<SP_OBJECT_ID> `
+  -target azuread_service_principal.validation `
+  -target azuread_application.validation
+
+Remove-Item infra/shared/azuread-validation.tf
+```
+
+Proceed to Sequence Step 4.
+
+**If apply fails with `Authorization_RequestDenied` → Path B (data sources):**
+
+```powershell
+Remove-Item infra/shared/azuread-validation.tf
+```
+
+Then create the SSO App Registration manually in the Azure portal before continuing:
+1. portal.azure.com → Azure Active Directory → App Registrations → New Registration
+2. Name: `app-insights-explorer-sso-tfg`
+3. Supported account types: **Accounts in any organizational directory and personal Microsoft accounts**
+4. Redirect URI: Web — `https://app-aie-frontend-test-tfg.azurewebsites.net/api/auth/callback/azure-ad`
+5. Record the **Application (client) ID** — this becomes `AZURE_AD_CLIENT_ID`
+
+Then edit `infra/shared/azuread.tf`: delete the two `resource` blocks and uncomment the two `data` blocks at the bottom of the file. Also update `infra/shared/outputs.tf` to reference `data.azuread_application.sso` and `data.azuread_service_principal.sso` instead of `azuread_application.sso` and `azuread_service_principal.sso`. Commit the change.
+
+---
+
+### Sequence Step 4 — Apply infra/shared/
+
+```powershell
+# Still in infra/shared/
+terraform apply -var cicd_sp_object_id=<SP_OBJECT_ID>
+```
+
+After apply, record outputs:
+
+```powershell
+terraform output acr_login_server   # e.g. craietesttfg.azurecr.io
+terraform output acr_id             # /subscriptions/.../providers/Microsoft.ContainerRegistry/registries/craietesttfg
+terraform output sso_client_id      # GUID — this is AZURE_AD_CLIENT_ID
+```
+
+---
+
+### Sequence Step 5 — Set ACR_LOGIN_SERVER GitHub Variable
+
+In GitHub → Variables → New repository variable:
+
+| Variable name | Value |
+|---|---|
+| `ACR_LOGIN_SERVER` | value from `terraform output acr_login_server` (e.g. `craietesttfg.azurecr.io`) |
+
+---
+
+### Sequence Step 6 — Create SSO client secret in Azure portal
+
+portal.azure.com → App Registrations → `app-insights-explorer-sso-tfg` → Certificates & secrets → New client secret
+- Description: any label (e.g. `ci`)
+- Expires: 24 months
+- **Copy the secret value immediately** — it is only shown once. This becomes `AZURE_AD_CLIENT_SECRET`.
+
+---
+
+### Sequence Step 7 — Init and apply infra/envs/test/
+
+```powershell
+Set-Location ..\envs\test
+
+terraform init `
+  -backend-config="resource_group_name=<TFSTATE_RG>" `
+  -backend-config="storage_account_name=<TFSTATE_SA>" `
+  -backend-config="container_name=tfstate" `
+  -backend-config="key=test.tfstate"
+
+terraform apply `
+  -var acr_login_server=<ACR_LOGIN_SERVER> `
+  -var acr_id=<ACR_ID> `
+  -var sso_client_id=<SSO_CLIENT_ID> `
+  -var cicd_sp_object_id=<SP_OBJECT_ID>
+```
+
+After apply, record outputs:
+
+```powershell
+terraform output webapp_frontend_name   # app-aie-frontend-test-tfg
+terraform output webapp_api_name        # app-aie-api-test-tfg
+terraform output kv_name               # kv-aie-test-tfg
+```
+
+---
+
+### Sequence Step 8 — Set 3 more GitHub Actions Variables
+
+In GitHub → Variables:
+
+| Variable name | Value |
+|---|---|
+| `WEBAPP_FRONTEND` | `app-aie-frontend-test-tfg` |
+| `WEBAPP_API` | `app-aie-api-test-tfg` |
+| `KV_NAME` | `kv-aie-test-tfg` |
+
+---
+
+### Sequence Step 9 — Generate NEXTAUTH_SECRET
+
+Run in PowerShell to generate a secure random value:
+
+```powershell
+[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
+
+Copy the output — this is `NEXTAUTH_SECRET`.
+
+---
+
+### Sequence Step 10 — Set GitHub Secrets (5)
+
+In GitHub → repo → Settings → Secrets and variables → Actions → **Secrets** tab → New repository secret
+
+| Secret name | Value |
+|---|---|
+| `AZURE_AD_CLIENT_ID` | from `terraform output sso_client_id` (or the client ID recorded in Step 3 Path B) |
+| `AZURE_AD_CLIENT_SECRET` | client secret value from Step 6 |
+| `ANTHROPIC_API_KEY` | your Anthropic API key |
+| `BACKEND_API_SECRET` | any strong random string shared between frontend and API |
+| `NEXTAUTH_SECRET` | value generated in Step 9 |
+
+---
+
+### Sequence Step 11 — Open PR and merge
+
+Infrastructure is provisioned. Secrets are set. Push the branch if you haven't already, open a PR from `fg/platform-3` into `development`, and merge. The push to `development` triggers `ci-test.yml`. Watch the Actions tab — the pipeline should complete build, push, deploy, Key Vault population, and both smoke tests.
 
 ---
 
