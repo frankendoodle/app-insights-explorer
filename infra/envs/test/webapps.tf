@@ -9,7 +9,8 @@ resource "azurerm_linux_web_app" "frontend" {
   }
 
   site_config {
-    always_on = false
+    always_on                               = false
+    container_registry_use_managed_identity = true
 
     application_stack {
       docker_image_name   = "app-insights-explorer-frontend:latest"
@@ -42,7 +43,8 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   site_config {
-    always_on = false
+    always_on                               = false
+    container_registry_use_managed_identity = true
 
     application_stack {
       docker_image_name   = "app-insights-explorer-api:latest"
