@@ -1,6 +1,6 @@
 resource "azurerm_resource_group" "test" {
   name     = "rg-app-insights-explorer-test-tfg"
-  location = "eastus"
+  location = "westus2"
 }
 
 resource "azurerm_service_plan" "test" {

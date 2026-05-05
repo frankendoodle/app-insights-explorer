@@ -332,7 +332,7 @@ read -r -p "Is this the correct subscription? (y/N) " confirm
 # ── Interactive configuration ─────────────────────────────────────────────────
 section "Configuration — press Enter to accept the default"
 
-LOCATION=$(prompt        "LOCATION"           "Azure region"                                      "eastus")
+LOCATION=$(prompt        "LOCATION"           "Azure region"                                      "westus2")
 TFSTATE_RG=$(prompt      "TFSTATE_RG"         "Resource group name for Terraform state storage"   "rg-aie-tfstate")
 TFSTATE_SA=$(prompt      "TFSTATE_SA"         "Storage account name (globally unique, lowercase)"  "aietfstate$RANDOM")
 TFSTATE_CONTAINER=$(prompt "TFSTATE_CONTAINER" "Blob container name"                              "tfstate")
@@ -751,7 +751,7 @@ Create `infra/shared/acr.tf`:
 resource "azurerm_container_registry" "main" {
   name                = "craietesttfg"
   resource_group_name = "rg-aie-tfstate"
-  location            = "eastus"
+  location            = "westus2"
   sku                 = "Basic"
   admin_enabled       = false
 }
@@ -1009,7 +1009,7 @@ Create `infra/envs/test/main.tf`:
 ```hcl
 resource "azurerm_resource_group" "test" {
   name     = "rg-app-insights-explorer-test-tfg"
-  location = "eastus"
+  location = "westus2"
 }
 
 resource "azurerm_service_plan" "test" {
@@ -1054,7 +1054,7 @@ Expected: `Apply complete! Resources: 2 added, 0 changed, 0 destroyed.`
 az group show --name rg-app-insights-explorer-test-tfg --query "{name:name,location:location}" -o table
 ```
 
-Expected: row showing `rg-app-insights-explorer-test-tfg`, `eastus`.
+Expected: row showing `rg-app-insights-explorer-test-tfg`, `westus2`.
 
 - [ ] **Step 3: Commit**
 
