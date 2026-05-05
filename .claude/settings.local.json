@@ -43,7 +43,8 @@
       "mcp__claude_ai_Atlassian__getTransitionsForJiraIssue",
       "mcp__claude_ai_Atlassian__transitionJiraIssue",
       "mcp__claude_ai_Atlassian__editJiraIssue",
-      "Bash(git *)"
+      "Bash(git *)",
+      "mcp__claude_ai_Atlassian__addCommentToJiraIssue"
     ]
   }
 }
