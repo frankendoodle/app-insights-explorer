@@ -146,6 +146,12 @@ echo ""
 [[ -n "$SP_OBJECT_ID" ]]        || { echo "ERROR: SP_OBJECT_ID is empty — SP lookup failed"; exit 1; }
 [[ -n "$STORAGE_RESOURCE_ID" ]] || { echo "ERROR: STORAGE_RESOURCE_ID is empty"; exit 1; }
 
+# Pin the CLI session to the correct subscription before any ARM role assignment calls.
+# az role assignment re-acquires an ARM token from the active subscription context;
+# passing --subscription alone is not sufficient on personal (MSA) accounts.
+az account set --subscription "$SUBSCRIPTION_ID"
+info "Subscription context pinned: $SUBSCRIPTION_ID"
+
 EXISTING_STORAGE_ROLE=$(az role assignment list --assignee "$SP_APP_ID" --role "Storage Blob Data Contributor" --scope "$STORAGE_RESOURCE_ID" --subscription "$SUBSCRIPTION_ID" --query "[0].id" -o tsv 2>/dev/null | tr -d '\r' || echo "")
 
 if [[ -n "$EXISTING_STORAGE_ROLE" && "$EXISTING_STORAGE_ROLE" != "null" ]]; then
