@@ -44,7 +44,10 @@
       "mcp__claude_ai_Atlassian__transitionJiraIssue",
       "mcp__claude_ai_Atlassian__editJiraIssue",
       "Bash(git *)",
-      "mcp__claude_ai_Atlassian__addCommentToJiraIssue"
+      "mcp__claude_ai_Atlassian__addCommentToJiraIssue",
+      "Bash(pwsh *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\src\\\\PersonalGit\\\\app-insights-explorer\" -Directory)",
+      "Bash(Select-Object Name)"
     ]
   }
 }

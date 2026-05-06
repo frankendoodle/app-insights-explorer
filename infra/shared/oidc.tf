@@ -31,3 +31,15 @@ resource "azuread_application_federated_identity_credential" "cicd_test_environm
   issuer         = "https://token.actions.githubusercontent.com"
   subject        = "repo:frankendoodle/app-insights-explorer:environment:test"
 }
+
+# OIDC federated credential — scoped to pull_request workflow context.
+# Required for the terraform.yml plan job to authenticate on PRs.
+# Must be applied manually once before the first PR triggers the plan job.
+resource "azuread_application_federated_identity_credential" "cicd_pull_request" {
+  application_id = data.azuread_application.cicd.id
+  display_name   = "github-pull-request"
+  description    = "GitHub Actions OIDC credential for pull_request workflow context."
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:frankendoodle/app-insights-explorer:pull_request"
+}
