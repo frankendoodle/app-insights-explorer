@@ -165,24 +165,24 @@ Expected: `Success! The configuration is valid.`
 
 Ensure you are authenticated with your personal Microsoft account:
 
-```bash
+```powershell
 az login
 ```
 
 Run init (backend values confirmed from PLATFORM-3 artifacts):
 
-```bash
-terraform -chdir=infra/shared init \
-  -backend-config="resource_group_name=rg-aie-tfstate-3" \
-  -backend-config="storage_account_name=aietfstate3" \
-  -backend-config="container_name=tfstate3" \
+```powershell
+terraform -chdir=infra/shared init `
+  -backend-config="resource_group_name=rg-aie-tfstate-3" `
+  -backend-config="storage_account_name=aietfstate3" `
+  -backend-config="container_name=tfstate3" `
   -backend-config="key=shared.tfstate"
 ```
 
 Apply:
 
-```bash
-terraform -chdir=infra/shared apply \
+```powershell
+terraform -chdir=infra/shared apply `
   -var="cicd_sp_object_id=248d95d0-05f1-4f3b-9f47-d30ee66ffbec"
 ```
 
@@ -192,9 +192,9 @@ Type `yes` when prompted.
 
 Option A — CLI (replace `<AZURE_CLIENT_ID>` with the value of the `AZURE_CLIENT_ID` GitHub Variable, which is the CI/CD service principal's application ID):
 
-```bash
-az ad app federated-credential list \
-  --id <AZURE_CLIENT_ID> \
+```powershell
+az ad app federated-credential list `
+  --id <AZURE_CLIENT_ID> `
   --query "[].subject" -o tsv
 ```
 
@@ -214,7 +214,7 @@ Option B — Azure portal: Navigate to **Azure Active Directory → App registra
 
 Run from your local machine (authenticated, with the shared module initialized from Task 2):
 
-```bash
+```powershell
 terraform -chdir=infra/shared output acr_id
 terraform -chdir=infra/shared output sso_client_id
 ```
