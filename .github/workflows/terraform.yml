@@ -79,6 +79,10 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            if (!context.issue.number) {
+              console.log('No PR associated with this run — plan output is available as a workflow artifact.')
+              return
+            }
             const fs = require('fs')
             const test = fs.existsSync('/tmp/test_plan.txt')
               ? fs.readFileSync('/tmp/test_plan.txt', 'utf8')
