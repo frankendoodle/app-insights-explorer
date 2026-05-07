@@ -21,7 +21,7 @@ on:
         options:
           - plan
           - apply
-# This is a comment
+
 permissions:
   id-token: write
   contents: read

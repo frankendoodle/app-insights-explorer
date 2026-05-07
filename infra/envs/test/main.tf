@@ -10,3 +10,4 @@ resource "azurerm_service_plan" "test" {
   os_type             = "Linux"
   sku_name            = "B1"
 }
+# This is a comment
