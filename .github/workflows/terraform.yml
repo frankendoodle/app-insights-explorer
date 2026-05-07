@@ -36,23 +36,6 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Init infra/shared
-        run: |
-          terraform -chdir=infra/shared init \
-            -input=false \
-            -backend-config="resource_group_name=${{ vars.TF_BACKEND_RESOURCE_GROUP }}" \
-            -backend-config="storage_account_name=${{ vars.TF_BACKEND_STORAGE_ACCOUNT }}" \
-            -backend-config="container_name=tfstate3" \
-            -backend-config="key=shared.tfstate"
-
-      - name: Plan infra/shared
-        run: |
-          terraform -chdir=infra/shared plan \
-            -no-color \
-            -input=false \
-            -var="cicd_sp_object_id=${{ vars.CICD_SP_OBJECT_ID }}" \
-            2>&1 | tee /tmp/shared_plan.txt
-
       - name: Init infra/envs/test
         run: |
           terraform -chdir=infra/envs/test init \
@@ -78,9 +61,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: terraform-plan-${{ github.event.pull_request.number }}
-          path: |
-            /tmp/shared_plan.txt
-            /tmp/test_plan.txt
+          path: /tmp/test_plan.txt
           if-no-files-found: ignore
 
       - name: Post plan comment
@@ -89,19 +70,11 @@ jobs:
         with:
           script: |
             const fs = require('fs')
-            const shared = fs.existsSync('/tmp/shared_plan.txt')
-              ? fs.readFileSync('/tmp/shared_plan.txt', 'utf8')
-              : '(plan output unavailable)'
             const test = fs.existsSync('/tmp/test_plan.txt')
               ? fs.readFileSync('/tmp/test_plan.txt', 'utf8')
               : '(plan output unavailable)'
             const body = [
               '## Terraform Plan',
-              '',
-              '### `infra/shared`',
-              '```',
-              shared.trim(),
-              '```',
               '',
               '### `infra/envs/test`',
               '```',
@@ -142,22 +115,6 @@ jobs:
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
-
-      - name: Init infra/shared
-        run: |
-          terraform -chdir=infra/shared init \
-            -input=false \
-            -backend-config="resource_group_name=${{ vars.TF_BACKEND_RESOURCE_GROUP }}" \
-            -backend-config="storage_account_name=${{ vars.TF_BACKEND_STORAGE_ACCOUNT }}" \
-            -backend-config="container_name=tfstate3" \
-            -backend-config="key=shared.tfstate"
-
-      - name: Apply infra/shared
-        run: |
-          terraform -chdir=infra/shared apply \
-            -auto-approve \
-            -input=false \
-            -var="cicd_sp_object_id=${{ vars.CICD_SP_OBJECT_ID }}"
 
       - name: Init infra/envs/test
         run: |
