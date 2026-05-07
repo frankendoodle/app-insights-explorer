@@ -11,6 +11,16 @@ on:
       - development
     paths:
       - 'infra/**'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Job to run'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - plan
+          - apply
 
 permissions:
   id-token: write
@@ -21,7 +31,7 @@ jobs:
   plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.job == 'plan')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -100,7 +110,7 @@ jobs:
   apply:
     name: Terraform Apply
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.job == 'apply')
     environment: test
     steps:
       - name: Checkout code
