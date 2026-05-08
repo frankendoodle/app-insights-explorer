@@ -1,0 +1,42 @@
+name: CI Release — Promote SHA to Staging and Production
+
+on:
+  push:
+    branches:
+      - 'release/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  get-sha:
+    name: Get release SHA
+    runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ steps.sha.outputs.short_sha }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get short git SHA
+        id: sha
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+  deploy-staging:
+    name: Deploy to STAGING
+    needs: get-sha
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: staging
+      sha: ${{ needs.get-sha.outputs.short_sha }}
+    secrets: inherit
+
+  deploy-production:
+    name: Deploy to PRODUCTION
+    needs: [get-sha, deploy-staging]
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: production
+      sha: ${{ needs.get-sha.outputs.short_sha }}
+    secrets: inherit
