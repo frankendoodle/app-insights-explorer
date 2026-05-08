@@ -1,13 +1,9 @@
-resource "azurerm_resource_group" "test" {
-  name     = "rg-app-insights-explorer-test-tfg"
-  location = "westus2"
+module "app_environment" {
+  source            = "../../modules/app-environment"
+  env_name          = "test"
+  suffix            = "tfg"
+  acr_login_server  = var.acr_login_server
+  acr_id            = var.acr_id
+  sso_client_id     = var.sso_client_id
+  cicd_sp_object_id = var.cicd_sp_object_id
 }
-
-resource "azurerm_service_plan" "test" {
-  name                = "asp-app-insights-explorer-test-tfg"
-  resource_group_name = azurerm_resource_group.test.name
-  location            = azurerm_resource_group.test.location
-  os_type             = "Linux"
-  sku_name            = "B1"
-}
-# This is a comment
