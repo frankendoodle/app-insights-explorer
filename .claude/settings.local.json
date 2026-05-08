@@ -52,7 +52,8 @@
       "mcp__claude_ai_Atlassian__getIssueLinkTypes",
       "mcp__claude_ai_Atlassian__createIssueLink",
       "Bash(echo \"local:$?\")",
-      "Bash(echo \"dir_exists:$?\")"
+      "Bash(echo \"dir_exists:$?\")",
+      "Skill(mm-claude-toolkit:jira:plan-code)"
     ]
   }
 }
