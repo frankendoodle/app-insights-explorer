@@ -36,16 +36,16 @@ Dossier for PLATFORM-457 — covers specs, plans, and pipeline status for the re
 
 | Spec | Spec Status | Plan | Implementation |
 |---|---|---|---|
-| deploy-workflow | final, pushed | approved | — |
+| deploy-workflow | final, pushed | approved | done |
 
-**Next actions:** `/jira:implement-plan PLATFORM-457 deploy-workflow`
+**Next actions:** `/jira:verify PLATFORM-457`
 
 ## Pipeline
 
 - [x] fetch
 - [x] spec-feature
 - [x] plan-code
-- [ ] implement
+- [x] implement
 - [ ] verify
 - [ ] qa-handoff
 - [ ] archive
