@@ -1,6 +1,6 @@
 module "app_environment" {
   source            = "../../modules/app-environment"
-  env_name          = "test"
+  env_name          = "production"
   suffix            = "tfg"
   acr_login_server  = var.acr_login_server
   acr_id            = var.acr_id
