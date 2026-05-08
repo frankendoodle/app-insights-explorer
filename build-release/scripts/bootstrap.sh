@@ -113,6 +113,39 @@ else
   success "Blob container created"
 fi
 
+TFSTATE_CONTAINER_STAGING="${TFSTATE_CONTAINER}-staging"
+TFSTATE_CONTAINER_PRODUCTION="${TFSTATE_CONTAINER}-production"
+
+if az storage container show \
+     --name "$TFSTATE_CONTAINER_STAGING" \
+     --account-name "$TFSTATE_SA" \
+     --auth-mode login &>/dev/null; then
+  skip "Blob container already exists: $TFSTATE_CONTAINER_STAGING"
+else
+  info "Creating blob container: $TFSTATE_CONTAINER_STAGING"
+  az storage container create \
+    --name "$TFSTATE_CONTAINER_STAGING" \
+    --account-name "$TFSTATE_SA" \
+    --auth-mode login \
+    --output none
+  success "Blob container created"
+fi
+
+if az storage container show \
+     --name "$TFSTATE_CONTAINER_PRODUCTION" \
+     --account-name "$TFSTATE_SA" \
+     --auth-mode login &>/dev/null; then
+  skip "Blob container already exists: $TFSTATE_CONTAINER_PRODUCTION"
+else
+  info "Creating blob container: $TFSTATE_CONTAINER_PRODUCTION"
+  az storage container create \
+    --name "$TFSTATE_CONTAINER_PRODUCTION" \
+    --account-name "$TFSTATE_SA" \
+    --auth-mode login \
+    --output none
+  success "Blob container created"
+fi
+
 STORAGE_RESOURCE_ID="/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$TFSTATE_RG/providers/Microsoft.Storage/storageAccounts/$TFSTATE_SA"
 
 # ── CI/CD Service Principal ───────────────────────────────────────────────────
@@ -181,6 +214,11 @@ echo ""
 echo "Also record this value — needed as input variable for infra/shared/:"
 echo ""
 echo "  SP_OBJECT_ID (cicd_sp_object_id) = $SP_OBJECT_ID"
+echo ""
+echo "Also record these container names — needed as backend-config values for terraform init:"
+echo ""
+echo "  Staging container    : ${TFSTATE_CONTAINER_STAGING}"
+echo "  Production container : ${TFSTATE_CONTAINER_PRODUCTION}"
 echo ""
 echo "Next steps:"
 echo "  1. Set the five AZURE_* and TF_BACKEND_* values above as GitHub Actions Variables"
