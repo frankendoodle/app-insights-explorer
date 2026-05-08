@@ -6,9 +6,9 @@ plans:
   - slug: deploy-workflow
     file: plans/deploy-workflow-plan-2026-05-08.md
     spec: specs/deploy-workflow-spec-2026-05-08.md
-    status: approved
-    started_at: null
-    worker_id: null
+    status: in_progress
+    started_at: "2026-05-08T20:10:00Z"
+    worker_id: "2026-05-08T20-10-a3f1"
 ---
 
 # Plans — PLATFORM-457
