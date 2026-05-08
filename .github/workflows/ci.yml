@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - development
-    paths:
-      - 'frontend/**'
-      - 'backend/**'
 
 permissions:
   id-token: write
