@@ -24,8 +24,8 @@ staging and production on push to a `release/**` branch.
 | 2 | Rename `ci-test.yml` → `ci.yml` | Agent | Task 1 committed |
 | 3 | Create `ci-release.yml` | Agent | Task 1 committed |
 | 4a | Add OIDC federated credentials (staging + production) | Agent | `infra/shared/` Terraform — applied automatically on merge |
-| 4b | Create staging GitHub environment with Variables and Secrets | **Human** | `terraform apply infra/envs/staging` |
-| 4c | Create production GitHub environment with Variables, Secrets, reviewer | **Human** | `terraform apply infra/envs/production` |
+| 4b | Create staging GitHub environment with Variables and Secrets | **Human** | `workflow_dispatch apply staging` completed |
+| 4c | Create production GitHub environment with Variables, Secrets, reviewer | **Human** | `workflow_dispatch apply production` completed |
 | 4d | End-to-end release verification | **Human** | 4a + 4b + 4c complete |
 
 Tasks 1–3 and 4a are code changes that merge together. `ci-release.yml` will fail with a 401
@@ -369,15 +369,27 @@ PLATFORM-457: add OIDC federated credentials for staging and production environm
 2. No protection rules needed for staging.
 3. Add the following **Variables** (Settings → Environments → staging → Environment variables):
 
+**Deployment variables** (needed by `_deploy.yml`):
+
 | Variable | Where to get the value |
 |---|---|
-| `WEBAPP_FRONTEND` | `terraform output -chdir=infra/envs/staging webapp_frontend_name` |
-| `WEBAPP_API` | `terraform output -chdir=infra/envs/staging webapp_api_name` |
-| `KV_NAME` | `terraform output -chdir=infra/envs/staging key_vault_name` |
-| `ACR_LOGIN_SERVER` | `terraform output -chdir=infra/shared acr_login_server` |
-| `AZURE_CLIENT_ID` | `terraform output -chdir=infra/shared cicd_client_id` |
-| `AZURE_TENANT_ID` | Azure Portal → tenant properties, or same value as in `test` environment |
+| `WEBAPP_FRONTEND` | `terraform -chdir=infra/envs/staging output webapp_frontend_name` |
+| `WEBAPP_API` | `terraform -chdir=infra/envs/staging output webapp_api_name` |
+| `KV_NAME` | `terraform -chdir=infra/envs/staging output kv_name` |
+| `ACR_LOGIN_SERVER` | `terraform -chdir=infra/shared output acr_login_server` |
+| `AZURE_CLIENT_ID` | same value as in `test` environment |
+| `AZURE_TENANT_ID` | same value as in `test` environment |
 | `AZURE_SUBSCRIPTION_ID` | same value as in `test` environment |
+
+**Terraform apply variables** (needed by `apply-staging` in `terraform.yml`):
+
+| Variable | Where to get the value |
+|---|---|
+| `ACR_ID` | same value as in `test` environment |
+| `SSO_CLIENT_ID` | same value as in `test` environment |
+| `CICD_SP_OBJECT_ID` | same value as in `test` environment |
+| `TF_BACKEND_RESOURCE_GROUP` | same value as in `test` environment |
+| `TF_BACKEND_STORAGE_ACCOUNT` | same value as in `test` environment |
 
 4. Add the following **Secrets** (Settings → Environments → staging → Environment secrets):
 
@@ -404,7 +416,7 @@ differences: different Terraform output values, and a required-reviewer protecti
 1. Name the environment `production`.
 2. Under **Protection rules**, enable **Required reviewers** and add yourself (or the
    designated approver). Set count to 1.
-3. Add **Variables** — same names as staging, values from `terraform output -chdir=infra/envs/production`.
+3. Add **Variables** — same two groups as staging (deployment variables from `terraform -chdir=infra/envs/production output`, Terraform apply variables with same values as staging).
 4. Add **Secrets** — same names as staging, with production-appropriate values.
 
 **Verify:** Settings → Environments → production shows the required-reviewer badge. All 7
