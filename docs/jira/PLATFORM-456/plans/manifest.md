@@ -6,8 +6,10 @@ date: 2026-05-08
 plans:
   - slug: terraform-module-extract
     file: terraform-module-extract-plan-2026-05-08.md
-    status: approved
+    status: in_progress
     spec: terraform-module-extract
+    started_at: 2026-05-08T17:45:00Z
+    worker_id: "2026-05-08T17-45-c9e2"
 ---
 
 # Plan Manifest — PLATFORM-456
