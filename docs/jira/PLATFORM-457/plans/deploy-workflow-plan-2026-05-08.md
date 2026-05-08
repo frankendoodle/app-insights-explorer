@@ -23,7 +23,7 @@ staging and production on push to a `release/**` branch.
 | 1 | Create `_deploy.yml` | Agent | — |
 | 2 | Rename `ci-test.yml` → `ci.yml` | Agent | Task 1 committed |
 | 3 | Create `ci-release.yml` | Agent | Task 1 committed |
-| 4a | Add OIDC federated credentials (staging + production) | Agent | `infra/shared/` Terraform — applied automatically on merge |
+| 4a | Add OIDC federated credentials (staging + production) | Agent (code) + Human (trigger) | Merge PR, then trigger `workflow_dispatch apply shared` |
 | 4b | Create staging GitHub environment with Variables and Secrets | **Human** | `workflow_dispatch apply staging` completed |
 | 4c | Create production GitHub environment with Variables, Secrets, reviewer | **Human** | `workflow_dispatch apply production` completed |
 | 4d | End-to-end release verification | **Human** | 4a + 4b + 4c complete |
@@ -340,16 +340,15 @@ resource "azuread_application_federated_identity_credential" "cicd_production_en
 }
 ```
 
-These are applied automatically when the PR merges and `terraform.yml` runs
-`terraform apply infra/shared/` on push to `development`. No manual Azure Portal steps needed.
+Applied via `workflow_dispatch` after the PR merges — `infra/shared/` is never auto-applied
+on push. No manual Azure Portal steps needed.
 
-**Verify:** After apply, run:
-```powershell
-terraform -chdir=infra/shared output
-```
-Or confirm in Azure Portal → App Registrations → CI/CD SP → Certificates & secrets →
-Federated credentials — two new entries `github-environment-staging` and
-`github-environment-production` appear alongside the existing three.
+**Trigger:** GitHub Actions → Terraform Plan / Apply → Run workflow → job: apply, environment: shared
+
+**Verify:** After the workflow run completes, confirm in Azure Portal → App Registrations →
+CI/CD SP → Certificates & secrets → Federated credentials — two new entries
+`github-environment-staging` and `github-environment-production` appear alongside the
+existing three.
 
 **Commit:**
 ```
