@@ -560,48 +560,19 @@ If prompted to migrate state, answer **no** — the state migration is handled m
 > scope. If any resource is missed, `terraform plan` will show it as destroy+recreate.
 > Run all 10 commands before checking the plan.
 
-Run from the repo root:
+Run each command individually from the repo root:
 
 ```powershell
-terraform -chdir=infra/envs/test state mv `
-  'azurerm_resource_group.test' `
-  'module.app_environment.azurerm_resource_group.test'
-
-terraform -chdir=infra/envs/test state mv `
-  'azurerm_service_plan.test' `
-  'module.app_environment.azurerm_service_plan.test'
-
-terraform -chdir=infra/envs/test state mv `
-  'azurerm_linux_web_app.frontend' `
-  'module.app_environment.azurerm_linux_web_app.frontend'
-
-terraform -chdir=infra/envs/test state mv `
-  'azurerm_linux_web_app.api' `
-  'module.app_environment.azurerm_linux_web_app.api'
-
-terraform -chdir=infra/envs/test state mv `
-  'azurerm_key_vault.test' `
-  'module.app_environment.azurerm_key_vault.test'
-
-terraform -chdir=infra/envs/test state mv `
-  'azurerm_role_assignment.frontend_acr_pull' `
-  'module.app_environment.azurerm_role_assignment.frontend_acr_pull'
-
-terraform -chdir=infra/envs/test state mv `
-  'azurerm_role_assignment.api_acr_pull' `
-  'module.app_environment.azurerm_role_assignment.api_acr_pull'
-
-terraform -chdir=infra/envs/test state mv `
-  'azurerm_role_assignment.frontend_kv_secrets_user' `
-  'module.app_environment.azurerm_role_assignment.frontend_kv_secrets_user'
-
-terraform -chdir=infra/envs/test state mv `
-  'azurerm_role_assignment.api_kv_secrets_user' `
-  'module.app_environment.azurerm_role_assignment.api_kv_secrets_user'
-
-terraform -chdir=infra/envs/test state mv `
-  'azurerm_role_assignment.cicd_kv_secrets_officer' `
-  'module.app_environment.azurerm_role_assignment.cicd_kv_secrets_officer'
+terraform -chdir=infra/envs/test state mv 'azurerm_resource_group.test' 'module.app_environment.azurerm_resource_group.test'
+terraform -chdir=infra/envs/test state mv 'azurerm_service_plan.test' 'module.app_environment.azurerm_service_plan.test'
+terraform -chdir=infra/envs/test state mv 'azurerm_linux_web_app.frontend' 'module.app_environment.azurerm_linux_web_app.frontend'
+terraform -chdir=infra/envs/test state mv 'azurerm_linux_web_app.api' 'module.app_environment.azurerm_linux_web_app.api'
+terraform -chdir=infra/envs/test state mv 'azurerm_key_vault.test' 'module.app_environment.azurerm_key_vault.test'
+terraform -chdir=infra/envs/test state mv 'azurerm_role_assignment.frontend_acr_pull' 'module.app_environment.azurerm_role_assignment.frontend_acr_pull'
+terraform -chdir=infra/envs/test state mv 'azurerm_role_assignment.api_acr_pull' 'module.app_environment.azurerm_role_assignment.api_acr_pull'
+terraform -chdir=infra/envs/test state mv 'azurerm_role_assignment.frontend_kv_secrets_user' 'module.app_environment.azurerm_role_assignment.frontend_kv_secrets_user'
+terraform -chdir=infra/envs/test state mv 'azurerm_role_assignment.api_kv_secrets_user' 'module.app_environment.azurerm_role_assignment.api_kv_secrets_user'
+terraform -chdir=infra/envs/test state mv 'azurerm_role_assignment.cicd_kv_secrets_officer' 'module.app_environment.azurerm_role_assignment.cicd_kv_secrets_officer'
 ```
 
 Each command outputs: `Move "..." to "..."` — confirm all 10 succeed before continuing.
@@ -636,10 +607,10 @@ trailing slash present, no version GUID appended.
 > **Run on your local machine.** Push the feature branch and open a PR against `development`.
 
 ```powershell
-git push origin fg/platform-456-terraform-module
+git push origin fg/PLATFORM-453
 ```
 
-Open a PR from `fg/platform-456-terraform-module` → `development`. The `pr.yml` workflow runs
+Open a PR from `fg/PLATFORM-453` → `development`. The `pr.yml` workflow runs
 automatically and posts a `terraform plan` comment on the PR.
 
 **Merge gate:** The plan comment must show `Plan: 0 to add, 0 to change, 0 to destroy` before
@@ -648,27 +619,20 @@ context.
 
 ---
 
-## Task 9 — Commit `[DEVELOPER STEP]`
+## Task 9 — Commits ✅ Done (auto-committed during Tasks 1–5)
 
-> Per project convention, commit is handled by the developer.
+All implementation changes were committed automatically during plan execution. No further
+commit action is required.
 
-Stage and commit all changes from Tasks 1–5:
+Commits made:
 
-```
-PLATFORM-456: extract infra/modules/app-environment, add staging and production env roots, extend bootstrap.sh
-```
-
-Files changed:
-- `infra/modules/app-environment/` (7 new files)
-- `infra/envs/test/main.tf` (replaced)
-- `infra/envs/test/outputs.tf` (replaced)
-- `infra/envs/test/webapps.tf` (deleted)
-- `infra/envs/test/keyvault.tf` (deleted)
-- `infra/envs/test/rbac.tf` (deleted)
-- `infra/envs/test/settings.tf` (deleted)
-- `infra/envs/staging/` (5 new files)
-- `infra/envs/production/` (5 new files)
-- `build-release/scripts/bootstrap.sh` (extended)
+| SHA | Message |
+|---|---|
+| `2241b9e` | PLATFORM-456: create infra/modules/app-environment |
+| `4aeee88` | PLATFORM-456: refactor infra/envs/test to use app-environment module |
+| `d3809c6` | PLATFORM-456: add infra/envs/staging |
+| `4888dac` | PLATFORM-456: add infra/envs/production |
+| `cfabff6` | PLATFORM-456: extend bootstrap.sh with staging and production tfstate containers |
 
 ---
 
