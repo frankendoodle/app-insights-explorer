@@ -1,0 +1,88 @@
+name: Deploy (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      sha:
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  IMAGE_FRONTEND: app-insights-explorer-frontend
+  IMAGE_API: app-insights-explorer-api
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Log in to Azure via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy frontend to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.WEBAPP_FRONTEND }}
+          images: ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_FRONTEND }}:${{ inputs.sha }}
+
+      - name: Deploy API to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.WEBAPP_API }}
+          images: ${{ vars.ACR_LOGIN_SERVER }}/${{ env.IMAGE_API }}:${{ inputs.sha }}
+
+      - name: Populate Key Vault secrets
+        run: |
+          az keyvault secret set --vault-name "${{ vars.KV_NAME }}" --name "AppRegistrationClientId"     --value "${{ secrets.AZURE_AD_CLIENT_ID }}"      --output none
+          az keyvault secret set --vault-name "${{ vars.KV_NAME }}" --name "AppRegistrationClientSecret" --value "${{ secrets.AZURE_AD_CLIENT_SECRET }}"   --output none
+          az keyvault secret set --vault-name "${{ vars.KV_NAME }}" --name "AnthropicApiKey"             --value "${{ secrets.ANTHROPIC_API_KEY }}"         --output none
+          az keyvault secret set --vault-name "${{ vars.KV_NAME }}" --name "BackendApiSecret"            --value "${{ secrets.BACKEND_API_SECRET }}"        --output none
+          az keyvault secret set --vault-name "${{ vars.KV_NAME }}" --name "NextAuthSecret"              --value "${{ secrets.NEXTAUTH_SECRET }}"           --output none
+
+      - name: Stop App Services
+        run: |
+          az webapp stop --name "${{ vars.WEBAPP_FRONTEND }}" --resource-group rg-app-insights-explorer-${{ inputs.environment }}-tfg
+          az webapp stop --name "${{ vars.WEBAPP_API }}"      --resource-group rg-app-insights-explorer-${{ inputs.environment }}-tfg
+
+      - name: Start App Services
+        run: |
+          az webapp start --name "${{ vars.WEBAPP_FRONTEND }}" --resource-group rg-app-insights-explorer-${{ inputs.environment }}-tfg
+          az webapp start --name "${{ vars.WEBAPP_API }}"      --resource-group rg-app-insights-explorer-${{ inputs.environment }}-tfg
+
+      - name: Wait for App Services to start
+        run: sleep 60
+
+      - name: Smoke test — API health check
+        run: |
+          curl --fail \
+               --retry 5 \
+               --retry-delay 15 \
+               --retry-connrefused \
+               --retry-all-errors \
+               https://${{ vars.WEBAPP_API }}.azurewebsites.net/health
+
+      - name: Smoke test — frontend liveness check
+        run: |
+          status=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+                        --retry 5 \
+                        --retry-delay 15 \
+                        --retry-connrefused \
+                        --retry-all-errors \
+                        https://${{ vars.WEBAPP_FRONTEND }}.azurewebsites.net) || exit 1
+          if [ "$status" -ge 500 ]; then
+            echo "Frontend returned HTTP $status — smoke test failed"
+            exit 1
+          fi
+          echo "Frontend returned HTTP $status — smoke test passed"
