@@ -23,14 +23,14 @@ staging and production on push to a `release/**` branch.
 | 1 | Create `_deploy.yml` | Agent | — |
 | 2 | Rename `ci-test.yml` → `ci.yml` | Agent | Task 1 committed |
 | 3 | Create `ci-release.yml` | Agent | Task 1 committed |
-| 4a | Add OIDC federated credentials (staging + production) | **Human** | PR merged |
+| 4a | Add OIDC federated credentials (staging + production) | Agent | `infra/shared/` Terraform — applied automatically on merge |
 | 4b | Create staging GitHub environment with Variables and Secrets | **Human** | `terraform apply infra/envs/staging` |
 | 4c | Create production GitHub environment with Variables, Secrets, reviewer | **Human** | `terraform apply infra/envs/production` |
 | 4d | End-to-end release verification | **Human** | 4a + 4b + 4c complete |
 
-Tasks 1–3 can be committed on a feature branch and merged before any of Tasks 4a–4d are done.
-The merged workflow files are structurally correct but `ci-release.yml` will fail with a 401
-until 4a is done and will deploy to non-existent resources until 4b/4c are done.
+Tasks 1–3 and 4a are code changes that merge together. `ci-release.yml` will fail with a 401
+until the merged `infra/shared/` Terraform is applied (which happens automatically on push to
+`development`). It will deploy to non-existent resources until 4b/4c are done.
 
 ---
 
@@ -313,36 +313,48 @@ PLATFORM-457: add ci-release.yml SHA-promotion release pipeline
 
 ---
 
-## Task 4a — [HUMAN] Add OIDC federated credentials for staging and production
+## Task 4a — [AGENT] Add OIDC federated credentials for staging and production
 
-**Do this after Tasks 1–3 are merged. No code changes.**
+**Files:** `infra/shared/oidc.tf` (modify)
 
-The CI/CD service principal currently has a federated credential covering only the `test`
-GitHub environment. Without credentials for `staging` and `production`, `az login` inside
-`_deploy.yml` will return a 401 when the release pipeline runs — with a misleading error.
+The CI/CD service principal currently has federated credentials for `development`, `test`, and
+`pull_request`. Add two more resources following the identical pattern used for `cicd_test_environment`.
 
-**Where:** Azure Portal → App Registrations → `{CI/CD service principal}` →
-Certificates & secrets → Federated credentials → Add credential
+```hcl
+resource "azuread_application_federated_identity_credential" "cicd_staging_environment" {
+  application_id = data.azuread_application.cicd.id
+  display_name   = "github-environment-staging"
+  description    = "GitHub Actions OIDC credential for the staging environment."
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:frankendoodle/app-insights-explorer:environment:staging"
+}
 
-Add two credentials, one at a time. For each, choose "GitHub Actions deploying Azure resources"
-and fill in:
-
-| Field | Staging value | Production value |
-|---|---|---|
-| Organization | `{GitHub org or username}` | same |
-| Repository | `{repo name}` | same |
-| Entity type | Environment | Environment |
-| GitHub environment name | `staging` | `production` |
-| Name (label) | `github-staging` | `github-production` |
-
-The resulting subject claims will be:
+resource "azuread_application_federated_identity_credential" "cicd_production_environment" {
+  application_id = data.azuread_application.cicd.id
+  display_name   = "github-environment-production"
+  description    = "GitHub Actions OIDC credential for the production environment."
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:frankendoodle/app-insights-explorer:environment:production"
+}
 ```
-repo:{owner}/{repo}:environment:staging
-repo:{owner}/{repo}:environment:production
-```
 
-**Verify:** Both credentials appear in the Federated credentials list. Names are distinct from
-the existing `test` credential.
+These are applied automatically when the PR merges and `terraform.yml` runs
+`terraform apply infra/shared/` on push to `development`. No manual Azure Portal steps needed.
+
+**Verify:** After apply, run:
+```powershell
+terraform -chdir=infra/shared output
+```
+Or confirm in Azure Portal → App Registrations → CI/CD SP → Certificates & secrets →
+Federated credentials — two new entries `github-environment-staging` and
+`github-environment-production` appear alongside the existing three.
+
+**Commit:**
+```
+PLATFORM-457: add OIDC federated credentials for staging and production environments
+```
 
 ---
 
@@ -418,8 +430,9 @@ Variables and 5 Secrets are present.
 6. Approve the production deployment.
 7. Confirm `deploy-production` completes successfully.
 
-**If staging fails with a 401:** OIDC federated credential for `staging` is missing or the
-subject claim doesn't match. Re-check Task 4a.
+**If staging fails with a 401:** The `infra/shared/` Terraform apply has not run yet, or the
+staging federated credential was not created. Confirm `terraform apply infra/shared/` completed
+successfully after the PR merged.
 
 **If staging fails with a resource-not-found error:** Terraform hasn't been applied for
 `infra/envs/staging`, or the Variable values in the GitHub environment don't match the actual

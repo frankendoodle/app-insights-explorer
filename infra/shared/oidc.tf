@@ -43,3 +43,23 @@ resource "azuread_application_federated_identity_credential" "cicd_pull_request"
   issuer         = "https://token.actions.githubusercontent.com"
   subject        = "repo:frankendoodle/app-insights-explorer:pull_request"
 }
+
+# OIDC federated credential — scoped to the staging environment.
+resource "azuread_application_federated_identity_credential" "cicd_staging_environment" {
+  application_id = data.azuread_application.cicd.id
+  display_name   = "github-environment-staging"
+  description    = "GitHub Actions OIDC credential for the staging environment."
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:frankendoodle/app-insights-explorer:environment:staging"
+}
+
+# OIDC federated credential — scoped to the production environment.
+resource "azuread_application_federated_identity_credential" "cicd_production_environment" {
+  application_id = data.azuread_application.cicd.id
+  display_name   = "github-environment-production"
+  description    = "GitHub Actions OIDC credential for the production environment."
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:frankendoodle/app-insights-explorer:environment:production"
+}
